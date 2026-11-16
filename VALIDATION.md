@@ -1,24 +1,69 @@
-# BPS 0.4.5 validation
+# BPS 0.4.6 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.4.5 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.4.6 / protocol 3, legacy 2 accepted |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 124 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 125 pass across the 14 root test files |
+| Node integration tests | 125 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.2 | 126 pass across the 18 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
-| Eight management/diagnostic tools | Registered |
+| Native host agent tools | Zero; provider-only |
 
 Synthetic tests use the real compiled protocol adapter. They cover OAuth,
 identity-bound refresh, models/reasoning metadata, proxy behavior, streaming,
-tool histories, attachments, compaction, continuation cache, quota and manual
-reset receipts. Stream-progress regressions reproduce the formerly unbounded
+tool histories, attachments, compaction, continuation cache and read-only quota.
+Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
 
-## Version 0.4.5 checks
+## Version 0.4.6 experiments and limits
+
+- Selected-tool catalog presentation: 20 paired function requests per version
+  and three paired raw-code requests. All 46 requests completed with correct
+  arguments. Function input fell from 36,200 to 23,852 tokens; medians were
+  4.69/4.34 seconds. This is a modest, noisy latency benefit, not a general SLA.
+- Repeated valid PNG requests: baseline uploaded three times, candidate once.
+  All six inferences completed. Cache isolation, TTL, limits, independent
+  cancellation, late completion and rejection invalidation pass offline tests.
+- Explicit prompt key without session headers: candidate reused one routing key
+  and obtained 5/5 warm follow-up cache hits; baseline used six keys and had no
+  hits. Task IDs remained distinct and previous_response_id remained rejected
+  without session identity. Total latency did not improve reliably.
+- Native echo filtering reduced a minimal response from approximately 289 KB
+  to 6.2 KB at the client; upstream bytes and input tokens were unchanged.
+- Exact 7,808-byte synthetic artifacts in one/two/four complete operations showed
+  faster first delivery but greater total time when split. Five of six tasks
+  completed exactly; one two-part task encountered a network error. No automatic
+  splitting policy is added.
+- New process preparation measured about 15 ms for minimal input and 54 ms for
+  1 MiB history. In-process preparation was about 10-12 microseconds. Burst SSE
+  merging saved tens of milliseconds. No process pool or delayed buffer is added.
+- Four paired direct/explicit-proxy requests completed. The existing proxy was
+  not faster; no proxy setting was changed. Application direct mode can still
+  traverse a machine VPN/TUN, so it is not proof of the physical route.
+- Concurrency stays at four. A second four-request wave received 403 for all
+  requests and testing stopped. Later single-request baseline and candidate
+  probes both returned an explicit upstream usage-policy block. Model access
+  still returned allowed=true. No alternate model/account/route was tried to
+  evade it, and final online inference acceptance is blocked by that upstream
+  response. The release preserves 403 with a fixed, non-sensitive error code.
+- Provider-only native host loading registers zero tools. OAuth, model discovery,
+  request forwarding, quota and reset-credit display remain. Manual MCP reset
+  endpoints were removed; existing local receipts are not deleted.
+- Installed Magpie native host and bundled Bun were exercised against a local
+  authenticated HTTP CONNECT proxy and a trusted test TLS origin. Provider proxy
+  selection overrode global proxy; special-character userinfo, model/usage calls,
+  image upload and two inference calls passed. The second image request reused
+  its upload ID. Proxy-Authorization never reached the origin. A wrong password
+  failed without a direct fallback or password disclosure. No real credentials
+  or external network were used for this transport test.
+
+These observations use one account, gpt-6-astra/xhigh and synthetic tasks. They
+do not establish p95, all-model behavior, or a guarantee against future refusals.
+
+## Earlier version 0.4.5 checks
 
 - The live strict native tool schema requires references to contain at least
   one string. Empty references instructions conflicted with that contract;
@@ -64,7 +109,7 @@ wait and verify explicit terminal errors without automatic request replay.
   round. It recorded no authorization headers and was removed from runtime
   code after investigation. Private evidence is outside the repository.
 
-This proves the repaired local path currently completes. Historical failed
+These earlier checks demonstrate completion at their observation times. Historical failed
 streams were not captured, so their specific upstream trigger remains
 unproven. See AUDIT.md for the confirmed plugin defects and remaining evidence
 boundary. No quota reset or reset-credit consumption was performed.

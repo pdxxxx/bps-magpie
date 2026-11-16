@@ -1,16 +1,16 @@
 # BPS for Magpie
 
-当前版本：0.4.5。修正工具封装与上游 schema 的冲突，减少不必要的工具调用推理，保留格式纠错和推理流保护。
+当前版本：0.4.6。仅作为 Magpie provider，支持自动模型同步、代理、推理与额度展示，并减少重复上传和无用响应回显。
 
 独立 Magpie / OpenCode provider：Excel/BPS OAuth 授权、令牌刷新、Responses
-推理、流式文本与工具往返，以及 ChatGPT/Codex 额度查询和手动重置。
+推理、流式文本与工具往返，以及 ChatGPT/Codex 额度与可用重置次数展示。
 
 插件独立运行，无需额外网关服务。
 
 ## 安装
 
 在 [GitHub Releases](https://github.com/pdxxxx/bps-magpie/releases) 下载
-`bps-magpie-0.4.5-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
+`bps-magpie-0.4.6-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
 Add a plugin 中填写解压后的 `bps-magpie` 目录。Windows x64 发布包已包含转换程序，
 不需要安装 Node.js 或 Go。也可执行（将路径替换为实际解压目录）：
 
@@ -33,7 +33,7 @@ workspace 一致性。凭据由 Magpie 保存；转换子进程不接收 token�
 & "$env:LOCALAPPDATA\Programs\magpie\magpie.exe" provider test bps <实际可用的模型ID>
 ~~~
 
-## 额度、次数与重置
+## 额度与重置次数
 
 Magpie 的账号额度卡片会读取：
 
@@ -45,47 +45,9 @@ Magpie 的账号额度卡片会读取：
 没有假定 Codex 窗口耗尽必然阻止 BPS 推理。查询失败或字段缺失不会伪装成 0。
 额度接口的权限错误也不会直接使仍有效的 BPS 登录失效。
 
-手动管理入口是插件自带的八个工具，Magpie 会通过插件工具 MCP
-（/mcp/magpie/tools）提供给 agent。实际名称会带宿主添加的插件前缀：
-
-| 工具 | 用途 |
-| --- | --- |
-| bps_diagnostics | 本地检查构建版本、协议、代理模式、缓存与凭据新鲜度，不访问上游 |
-| bps_accounts | 列出本插件账号标识，不返回 token |
-| bps_quota | 查询指定账号的额度、点数和重置次数 |
-| bps_prepare_reset | 查询剩余次数并生成绑定账号的兑换请求，不消费 |
-| bps_reset | 使用准备好的 request_id 执行一次重置，要求 confirm=true |
-| bps_reset_status | 分页或按请求 ID 查询本地重置回执，token 过期时也可查看 |
-| bps_retry_reset | 首次发送十分钟内，明确要求重试时复用原兑换 ID |
-| bps_resolve_reset | 核实实际结果后登记 consumed / not_consumed 的人工确认，不调用上游 |
-
-使用顺序为 bps_accounts → bps_quota；需要重置时执行
-bps_prepare_reset → bps_reset。仅在你明确要求重置时执行消费步骤。
-
-bps_reset_status 默认返回最近 100 条回执。可传 offset / limit 分页（limit 为
-1–100），结果提供 total、hasMore 和 nextOffset；也可只传 account 与 request_id
-直接查询旧回执。request_id 不能与分页参数一起使用。查询仅访问本地回执，
-已保存 token 过期时仍可使用；不会触发重置或消耗次数。
-
-每个准备请求十分钟内有效，实际执行时消耗一次 Codex 重置次数。
-重复准备复用同一请求；同一 workspace 的不同账号别名共用消费锁。
-
-兑换请求 ID 在发送前落盘，同一请求再次调用不会重复消费，插件重启后仍生效。
-网络中断或结果不明会返回 unknown，不自动重试。成功消费但后续额度刷新失败
-会明确返回“已重置，回读失败”，不会把成功消费误报成可重试失败。
-存在 unknown 回执时，禁止另建兑换请求。可先用 bps_reset_status 查看，明确要求
-重试时使用 bps_retry_reset 复用原 request_id。超过重试窗口时，必须核实真实账号
-结果后再用 bps_resolve_reset 登记人工确认；不得根据用量百分比猜测是否已消费。
-回执在发送前同步写入磁盘，人工确认与上游成功分别记录，不混淆验证来源。
-
-管理工具只读取 Magpie 配置目录中属于 bps 的已登录账号，不写登录文件。
-若 token 已过期或即将过期，先在 Magpie 刷新额度，让宿主统一续期，避免与
-宿主的跨进程 refresh-token 锁竞争。继承代理模式下，额度卡片和推理在宿主的
-账号代理作用域中执行，MCP 管理工具继承全局代理；指定插件代理时所有入口统一。
-
-重置回执位于 Magpie 配置目录的 bps-resets/，不含 access/refresh token。
-如果进程在消费时崩溃，残留账号锁不会自动清除；先查询额度和回执，确认没有
-正在执行的重置，再处理对应 .lock 文件。不要以删除回执的方式重试不明消费。
+插件仅向 Magpie 提供 provider，不向 agent 注册管理工具或 MCP 服务。
+额度和可用重置次数由 Magpie 的账号卡片读取。
+插件不提供额度重置操作；旧版产生的本地回执不会被升级删除。
 
 ## 模型与设置
 
@@ -100,6 +62,9 @@ bps_reset_status 默认返回最近 100 条回执。可传 offset / limit 分页
 代理可选跟随 Magpie、指定 HTTP(S) 代理或直连；授权换票、模型同步、推理、
 附件和额度请求共用同一代理策略。浏览器授权页面使用浏览器自身的网络设置。
 SOCKS 代理请配置在 Magpie 中并选择跟随。连接失败不会自动回退直连。
+供应商内设置带认证的 HTTP 代理时，插件保持“跟随 Magpie”即可；地址使用
+`http://用户名:密码@主机:端口`，用户名或密码中的 `@`、`:`、`/`、`%` 等特殊字符
+需要 URL 编码。插件显式指定代理或直连时会覆盖宿主代理选择。
 
 保存后重新启用插件以应用配置。模型来自上游权限接口，旧 options.models 会被忽略，
 下次保存设置时移除。没有写入推测的上下文长度、价格或账号权限。
@@ -124,6 +89,8 @@ SOCKS 代理请配置在 Magpie 中并选择跟随。连接失败不会自动回
 持续到达的推理或文本数据会重置进展计时，本地消费者暂停不会消耗这段等待时间。
 非流式请求返回明确的 504；流式请求已经开始后，返回 `response.failed` 终态。
 连接中断、数据不完整和总超时同样明确报告，不自动重发已接受的推理请求。
+上游明确返回使用策略阻断时，保留 HTTP 403 并报告
+`basispoints_usage_policy_blocked`，不伪装成登录过期，也不会自动更换模型重试。
 
 工具调用只有格式错误、且整批尚未执行时，会请求 BPS 最多纠正两次格式。
 纠错沿用同一账号、代理、模型和历史，保留原始操作内容；不允许替换已知工具目标，
@@ -149,6 +116,13 @@ additional_tools / tool_search_output 输入项支持增量合并。显式 tools
 tool_choice: none 只禁用本轮，不清空保存的目录。历史目录控制项不会在续聊中
 反复重新声明，避免已清空的工具被旧历史恢复。
 
+显式指定某个 function/custom 工具时，只向上游展示该工具的说明和适用示例；
+内部仍校验完整目录，并保留其他历史工具以正确恢复续接。auto 和 required 模式
+仍展示完整目录，不猜测或删除用户可能需要的能力。
+
+调用方显式提供 prompt_cache_key 时，提示路由键按账号、workspace、模型和该值
+生成；无会话头时也可稳定复用。它不充当会话 ID，不允许跨线程取回历史。
+
 缓存仅位于当前插件进程内：最多 128 条、32 MiB 数据预算、单条 4 MiB，闲置
 30 分钟后在下次访问时清理。预算包含条目数据及估算元数据，不代表进程 RSS，
 也不包含在途请求和子进程内存。进程重启、插件重载、到期、淘汰、超限或切换
@@ -168,7 +142,7 @@ full-history-required 表示下次需要完整历史。流式响应提前返回 
 ## 推理实现与边界
 
 - Magpie hooks：config、OAuth methods、loader.fetch、refresh、usage、
-  provider.models、chat.headers、tool。对宿主暴露 Responses API。
+  provider.models、chat.headers。对宿主暴露 Responses API，不注册 agent 工具。
 - 令牌提前五分钟续期，同一进程内并发刷新合并；Magpie 0.1.684+ 使用
   原生 refresh hook，旧宿主/OpenCode 由 fetch 路径补做刷新。
 - 支持 HTTP /responses 的 SSE 与非流式 JSON、真实 usage、function/custom
@@ -178,10 +152,16 @@ full-history-required 表示下次需要完整历史。流式响应提前返回 
 - fetch 支持 URL + init 及标准 Request 对象；取消请求体读取、总超时 504 和
   OAuth/额度/附件的流式大小限制均已覆盖。
 - 支持 HTTPS 图片和内联图片。先校验整批请求，再以同一账号上传附件。
+- 宿主按账号/工作区与图片摘要缓存最多 128 个附件 ID，固定有效期 10 分钟。
+  同图在途上传可合并；缓存不保存图片正文和凭据。单个调用取消不影响其他等待者，
+  所有调用取消后终止上传。上游拒绝或失败会失效相关缓存，不自动重放推理。
+- 去掉原生 instructions/tools 回显，保留状态、错误、用量、工具输出和 opaque state。
+  这减少本地 IPC、缓存和客户端流量，不减少已经收到的上游流量。
 - 客户端取消会终止请求体生产者、上游和转换子进程；完整终态后释放上游连接。
   Request 对象的正文仅消费一次，已消费或被锁定的正文不能重复发送。
 - 401/403/429 保留对应 HTTP 语义，429 传递有效 Retry-After，不自动重放
   已接受的推理。账号路由、并发和失败切换由 Magpie 管理。
+- 供应商并发上限保持 4，不自动提高；不会强制拆细文件或启用转换进程池。
 - 每次推理使用独立 Go 转换进程，不监听端口，不访问网络，不执行 OfficeJS
   或工具正文。所有外部请求通过插件宿主 fetch 发出。
 
@@ -216,8 +196,8 @@ index.mjs               插件 hooks
 src/auth.mjs            授权与续期
 src/provider.mjs        推理传输
 src/bridge.mjs          本地转换 IPC
-src/quota.mjs           额度、点数与重置接口
-src/management.mjs      账号工具与防重复消费回执
+src/quota.mjs           额度、点数与可用重置次数读取
+src/attachments.mjs     账号隔离的附件 ID 缓存
 src/network.mjs         统一代理与有界 JSON 读取
 src/state.mjs           账号/线程隔离的有界会话缓存
 src/events.mjs          流式终态观察

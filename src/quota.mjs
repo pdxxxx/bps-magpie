@@ -2,7 +2,6 @@
 import { readJSON } from "./network.mjs";
 export const USAGE_URL="https://chatgpt.com/backend-api/wham/usage";
 export const CREDITS_URL="https://chatgpt.com/backend-api/wham/rate-limit-reset-credits";
-export const CONSUME_URL=CREDITS_URL+"/consume";
 
 function integer(value){
   if(typeof value==="string" && /^\d+$/.test(value.trim()))value=Number(value);
@@ -66,10 +65,10 @@ export function projectUsage(usage,details,{now=Date.now(),detailsError}={}){
 
 export function quotaHeaders(auth){return new Headers({authorization:"Bearer "+auth.access,"chatgpt-account-id":auth.workspaceId,"openai-beta":"codex-1","oai-language":"zh-CN",originator:"Codex Desktop",accept:"application/json","sec-fetch-site":"none","sec-fetch-mode":"no-cors","sec-fetch-dest":"empty",priority:"u=4, i"});}
 
-async function request(auth,url,{fetchImpl=globalThis.fetch,signal,body}={}){
+async function request(auth,url,{fetchImpl=globalThis.fetch,signal}={}){
   const timeout=AbortSignal.timeout(20000);const combined=signal?AbortSignal.any([signal,timeout]):timeout;
-  const headers=quotaHeaders(auth);if(body)headers.set("content-type","application/json");
-  const response=await fetchImpl(url,{method:body?"POST":"GET",headers,body:body?JSON.stringify(body):undefined,redirect:"error",signal:combined});
+  const headers=quotaHeaders(auth);
+  const response=await fetchImpl(url,{method:"GET",headers,redirect:"error",signal:combined});
   if(!response.ok){await response.body?.cancel();throw Object.assign(new Error("ChatGPT/Codex 额度接口返回 HTTP "+response.status),{status:response.status});}
   return readJSON(response,1024*1024,"quota");
 }
@@ -81,15 +80,4 @@ export async function queryQuota(auth,deps={}){
   if(usage.value.account_id && usage.value.account_id!==auth.workspaceId)throw new Error("Quota response belongs to another workspace");
   const result=projectUsage(usage.value,details.status==="fulfilled"?details.value:undefined,{detailsError:details.status==="rejected"});
   return {...result,observedAt:new Date().toISOString()};
-}
-
-export async function consumeReset(auth,requestID,deps={}){
-  if(typeof requestID!=="string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestID))throw new Error("A valid UUID-v4 redeem request ID is required");
-  const result=await request(auth,CONSUME_URL,{...deps,body:{redeem_request_id:requestID}});
-  if(!result || result.code!=="success" || !Number.isSafeInteger(result.windows_reset) || result.windows_reset<1)throw new Error("Reset was not confirmed by upstream; query quota before another reset");
-  const output={status:"success",requestId:requestID,windowsReset:result.windows_reset,redeemedAt:instant(result.credit?.redeemed_at)};
-  // Consumption has succeeded. A subsequent read failure is a warning,
-  // never a failed reset that invites another consumption.
-  try{output.quota=await queryQuota(auth,deps);}catch{output.warning="重置已成功，但额度回读失败；请单独刷新额度，不要再次重置。";}
-  return output;
 }

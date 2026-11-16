@@ -1,5 +1,5 @@
 // Leave proxy unspecified to preserve Magpie's account/provider/global scope.
-// An explicit override applies to every plugin endpoint, including MCP tools.
+// An explicit override applies to every provider endpoint.
 export function proxyOption(options={}) {
   const value=options.proxy;
   if(value===undefined || value===null || value==="" || value==="inherit")return undefined;

@@ -7,7 +7,7 @@ import {progressReader} from "./progress.mjs";
 
 export const binaryPath=fileURLToPath(new URL(`../bin/bps-bridge-${process.platform}-${process.arch}${process.platform==="win32"?".exe":""}`,import.meta.url));
 
-export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs,metrics}={}) {
+export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs,metrics,promptCacheKey}={}) {
   signal?.throwIfAborted();
   if(!existsSync(binary)) throw new Error("BPS bridge is not built for this platform. Run npm run build in the plugin directory (Go 1.27.4+ required).");
   if(Buffer.byteLength(raw)>MAX_BODY) throw Object.assign(new Error("BPS request exceeds 64 MiB"),{status:413});
@@ -38,14 +38,14 @@ export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryP
     }
   }
   try{
-    await send(JSON.stringify({protocol:3,raw:Buffer.from(raw).toString("base64"),scope,compact,keepContext,previous:previous?.toString("base64"),terminal:terminal?.toString("base64"),catalog:catalog?.toString("base64")})+"\n");
+    await send(JSON.stringify({protocol:3,raw:Buffer.from(raw).toString("base64"),scope,compact,keepContext,promptCacheKey,previous:previous?.toString("base64"),terminal:terminal?.toString("base64"),catalog:catalog?.toString("base64")})+"\n");
     let prepared;
     for(;;){
       const event=await line();
       if(event.kind==="error") throw Object.assign(new Error(event.message || "Invalid BPS request"),{status:400});
       if(event.kind==="request"){prepared=event;break;}
       if(event.kind!=="upload" || !upload) throw new Error("Unsupported BPS bridge handshake");
-      const id=await upload(Buffer.from(event.body,"base64"),event.contentType);
+      const id=await upload(Buffer.from(event.body,"base64"),event.contentType,event.cacheKey);
       await send(JSON.stringify({id})+"\n");
     }
     if(prepared.protocol!==3||typeof prepared.context!=="string")throw new Error("BPS bridge is out of date; rebuild the plugin binary");

@@ -2,9 +2,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { BASE_URL, MAX_BODY } from "./constants.mjs";
 import { startBridge, collectResponse } from "./bridge.mjs";
 import { readJSON } from "./network.mjs";
-import {createConversationStore,conversationScope} from "./state.mjs";
+import {createConversationStore,conversationScope,accountScope,promptRoutingKey} from "./state.mjs";
 import {observeResponseStream} from "./events.mjs";
 import {createRequestMetrics} from "./metrics.mjs";
+import {createAttachmentStore} from "./attachments.mjs";
 
 export function bpsHeaders(auth,{accept="text/event-stream",contentType="application/json"}={}) {
   const headers=new Headers({authorization:`Bearer ${auth.access}`,"chatgpt-account-id":auth.workspaceId,"x-openai-account-id":auth.workspaceId,
@@ -19,25 +20,37 @@ export function apiError(status,code,message,headers={}) {
   return Response.json({error:{type:status===400?"invalid_request_error":status===401?"authentication_error":status===429?"rate_limit_error":"server_error",code,message}},{status,headers});
 }
 
-async function upstreamError(response){
+async function upstreamError(response,signal){
   const headers={};
+  let usagePolicyBlocked=false;
   const retry=response.headers.get("retry-after");
   if(retry && (/^\d{1,6}$/.test(retry) || (retry.length<80 && Number.isFinite(Date.parse(retry)))))headers["retry-after"]=retry;
   if(response.status===401)headers["x-magpie-sign-in"]="expired";
-  await response.body?.cancel();
+  if(response.status===403&&response.body&&signal){
+    const reader=response.body.getReader();const cancel=()=>{void reader.cancel().catch(()=>{});};
+    const timer=setTimeout(cancel,1500);signal.addEventListener('abort',cancel,{once:true});
+    try{
+      const chunks=[];let size=0;
+      for(;;){signal.throwIfAborted();const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>16384)break;chunks.push(part.value);}
+      if(size<=16384){const problem=JSON.parse(Buffer.concat(chunks,size).toString('utf8'));usagePolicyBlocked=typeof problem?.error?.message==="string"&&/blocked by our usage policy/i.test(problem.error.message);}
+    }catch{}finally{clearTimeout(timer);signal.removeEventListener('abort',cancel);cancel();reader.releaseLock();}
+  }
+  await response.body?.cancel().catch(()=>{});
+  signal?.throwIfAborted();
   const status=response.status>=400&&response.status<=599?response.status:502;
-  return apiError(status,status===401?"basispoints_auth_expired":status===403?"basispoints_access_denied":status===429?"basispoints_rate_limited":"basispoints_upstream_error",
-    status===401?"Excel/BPS authorization was rejected; sign in again":status===403?"This Excel/BPS account or model is not permitted":`Excel/BPS upstream returned HTTP ${response.status}`,headers);
+  return apiError(status,usagePolicyBlocked?"basispoints_usage_policy_blocked":status===401?"basispoints_auth_expired":status===403?"basispoints_access_denied":status===429?"basispoints_rate_limited":"basispoints_upstream_error",
+    usagePolicyBlocked?"BPS upstream blocked this request under its usage policy; no automatic replay was attempted":status===401?"Excel/BPS authorization was rejected; sign in again":status===403?"This Excel/BPS account or model is not permitted":`Excel/BPS upstream returned HTTP ${response.status}`,headers);
 }
 
 export function makeFetch(getAuth,credentials,options={},deps={}){
   const fetchImpl=deps.fetchImpl || ((...args)=>globalThis.fetch(...args));
   if(options.continuationCache!==undefined&&typeof options.continuationCache!=="boolean")throw new Error("continuationCache must be a boolean");
   const state=deps.state||createConversationStore({enabled:options.continuationCache!==false});
+  const attachments=deps.attachments||createAttachmentStore();
   const timeoutMs=options.timeoutMs??30*60*1000;
   if(!Number.isInteger(timeoutMs) || timeoutMs<1000 || timeoutMs>60*60*1000)throw new Error("timeoutMs must be between 1000 and 3600000");
   return async function(input,init={}) {
-    let bridge,cacheScope,streaming=false,outcome='rejected';
+    let bridge,cacheScope,owner,streaming=false,outcome='rejected';
     const metrics=createRequestMetrics(deps.onMetrics);
     const controller=new AbortController();
     const callerSignal=init.signal??(input instanceof Request?input.signal:undefined);
@@ -64,6 +77,7 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
       if(compact && source.stream===true)return apiError(400,"basispoints_request_invalid","The standalone compact endpoint returns JSON; omit stream or set it to false");
       metrics?.start('auth_ms');
       const auth=await credentials.current(getAuth,signal);
+      owner=accountScope(auth);
       metrics?.end('auth_ms');
       const incoming=new Headers(init.headers??(input instanceof Request?input.headers:undefined));
       cacheScope=conversationScope(auth,incoming,source.model);
@@ -73,22 +87,25 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
       await state.serial(cacheScope,signal,async()=>{
       metrics?.end('scope_queue_ms');metrics?.start('prepare_ms');
       const saved=state.snapshot(cacheScope,source.previous_response_id,{explicitTools:Object.hasOwn(source,"tools")});
-      bridge=await startBridge(raw,scope,{signal,binary:deps.binary,streamIdleMs:deps.streamIdleMs,metrics,compact,keepContext:!!cacheScope&&state.enabled,...saved,async repair(body){
+      bridge=await startBridge(raw,scope,{signal,binary:deps.binary,streamIdleMs:deps.streamIdleMs,metrics,promptCacheKey:promptRoutingKey(auth,source),compact,keepContext:!!cacheScope&&state.enabled,...saved,async repair(body){
         metrics?.start('repair_headers_ms');
         const response=await fetchImpl(BASE_URL+"/responses",{...requestOptions,headers:bpsHeaders(auth),body});
         metrics?.end('repair_headers_ms');
-        if(!response.ok){if(response.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);await response.body?.cancel();throw new Error("BPS tool correction request failed");}
+        if(!response.ok){if([400,401,403,404].includes(response.status))attachments.forgetOwner(owner);if(response.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);await response.body?.cancel();throw new Error("BPS tool correction request failed");}
         if(!response.headers.get("content-type")?.toLowerCase().includes("text/event-stream")){await response.body?.cancel();throw new Error("BPS tool correction returned an invalid stream");}
         return response.body;
-      },async upload(body,contentType){
-        metrics?.count('upload_count');metrics?.start('upload_ms');
+      },async upload(body,contentType,digest){
+        metrics?.start('upload_ms');
         try{
-        const response=await fetchImpl(BASE_URL+"/attachments",{...requestOptions,headers:bpsHeaders(auth,{contentType,accept:"application/json"}),body});
+        return await attachments.use(owner,digest,signal,async uploadSignal=>{
+        metrics?.count('upload_count');
+        const response=await fetchImpl(BASE_URL+"/attachments",{...requestOptions,signal:AbortSignal.any([uploadSignal,AbortSignal.timeout(timeoutMs)]),headers:bpsHeaders(auth,{contentType,accept:"application/json"}),body});
         if(!response.ok)throw Object.assign(new Error("BPS attachment upload failed"),{upstream:response});
         const data=await readJSON(response,65536,"BPS attachment");
         const id=data.openai_file_id;
         if(typeof id!=="string" || !/^file-[A-Za-z0-9_-]{1,251}$/.test(id))throw new Error("BPS returned an invalid attachment ID");
         return id;
+        },metrics);
         }finally{metrics?.end('upload_ms');}
       }});
       metrics?.end('prepare_ms');
@@ -97,14 +114,14 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
       metrics?.start('headers_ms');
       const response=await fetchImpl(BASE_URL+"/responses",{...requestOptions,headers:bpsHeaders(auth),body:bridge.body});
       metrics?.end('headers_ms');
-      if(!response.ok){outcome='http_error';bridge.dispose();if(response.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);return upstreamError(response);}
+      if(!response.ok){outcome='http_error';bridge.dispose();if([400,401,403,404].includes(response.status))attachments.forgetOwner(owner);if(response.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);return await upstreamError(response,signal);}
       if(!response.headers.get("content-type")?.toLowerCase().includes("text/event-stream")){await response.body?.cancel();throw new Error("BPS did not return the expected SSE response");}
       const stream=bridge.stream(response.body);
       const headers={"cache-control":"no-store","x-bps-effort":bridge.effort,"x-bps-continuation":cacheScope&&state.enabled?"memory-limited":"full-history-required"};
       if(bridge.warnings.length)headers["x-bps-warning-count"]=String(bridge.warnings.length);
       if(source.stream===true){
         let terminalSeen=false;
-        const reader=observeResponseStream(stream,(event,raw)=>{terminalSeen=true;state.complete(cacheScope,bridge.context,event,raw,{requiresCatalog:bridge.catalog.length>2});}).getReader();
+        const reader=observeResponseStream(stream,(event,raw)=>{terminalSeen=true;if(event.type==='response.failed'||event.type==='error')attachments.forgetOwner(owner);state.complete(cacheScope,bridge.context,event,raw,{requiresCatalog:bridge.catalog.length>2});}).getReader();
         const wrapped=new ReadableStream({
           async pull(c){try{const p=await reader.read();if(p.done){metrics?.finish();c.close();}else c.enqueue(p.value);}catch(e){
             if(callerSignal?.aborted){metrics?.finish('cancelled');c.error(callerSignal.reason||e);controller.abort();return;}
@@ -121,6 +138,7 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
         streaming=true;return result;
       }
       const terminal=await collectResponse(stream);
+      if(terminal.type==='response.failed'||terminal.type==='error')attachments.forgetOwner(owner);
       outcome=undefined;
       if(terminal.type!=="response.completed")return Response.json(terminal.response||{error:terminal.error||{code:"basispoints_upstream_error",message:"BPS failed before completion"},...(terminal.usage?{usage:terminal.usage}:{})},{status:!compact&&terminal.type==="response.incomplete"?200:502,headers});
       if(compact){
@@ -135,8 +153,8 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
       const timedOut=signal.aborted&&signal.reason?.name==="TimeoutError";
       outcome=callerSignal?.aborted?'cancelled':timedOut||error.code==='basispoints_stream_timeout'?'timeout':'error';
       bridge?.dispose();controller.abort();
-      if(error.upstream){if(error.upstream.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);return upstreamError(error.upstream);}
       if(callerSignal?.aborted)throw callerSignal.reason || error;
+      if(error.upstream){if(error.upstream.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);return await upstreamError(error.upstream);}
       if(timedOut)return apiError(504,"basispoints_timeout","BPS request timed out; no automatic replay was attempted");
       if(error.code==="basispoints_stream_timeout")return apiError(504,error.code,error.message);
       const status=error.signIn==="expired"?401:error.status||502;

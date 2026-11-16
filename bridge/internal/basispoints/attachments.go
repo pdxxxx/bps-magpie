@@ -30,6 +30,12 @@ type InlineAttachment struct {
 	digest  [32]byte
 }
 
+// CacheKey contains no image bytes or account identity. The host additionally
+// binds it to the authenticated account and workspace.
+func (a InlineAttachment) CacheKey() string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(a.MIME+"\x00"+string(a.digest[:]))))
+}
+
 func (a InlineAttachment) Multipart() (io.Reader, string, int64, error) {
 	var framing bytes.Buffer
 	writer := multipart.NewWriter(&framing)

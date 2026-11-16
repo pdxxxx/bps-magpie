@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -35,14 +36,15 @@ func frame(in *bufio.Reader, target any) error {
 
 func run(in *bufio.Reader, out io.Writer) error {
 	var request struct {
-		Protocol    int    `json:"protocol"`
-		Raw         []byte `json:"raw"`
-		Scope       string `json:"scope"`
-		Compact     bool   `json:"compact"`
-		Previous    []byte
-		Terminal    []byte
-		Catalog     []byte
-		KeepContext bool
+		Protocol       int    `json:"protocol"`
+		Raw            []byte `json:"raw"`
+		Scope          string `json:"scope"`
+		Compact        bool   `json:"compact"`
+		Previous       []byte
+		Terminal       []byte
+		Catalog        []byte
+		KeepContext    bool
+		PromptCacheKey string
 	}
 	if err := frame(in, &request); err != nil {
 		return errors.New("invalid bridge request")
@@ -108,7 +110,7 @@ func run(in *bufio.Reader, out io.Writer) error {
 		if err != nil {
 			return "", err
 		}
-		if err = enc.Encode(map[string]any{"kind": "upload", "body": raw, "contentType": contentType}); err != nil {
+		if err = enc.Encode(map[string]any{"kind": "upload", "body": raw, "contentType": contentType, "cacheKey": a.CacheKey()}); err != nil {
 			return "", err
 		}
 		var answer struct {
@@ -133,6 +135,22 @@ func run(in *bufio.Reader, out io.Writer) error {
 		}
 	}
 	protocol := 2
+	if request.PromptCacheKey != "" {
+		if len(request.PromptCacheKey) != 36 || request.PromptCacheKey[:4] != "bps-" {
+			return errors.New("invalid host prompt cache key")
+		}
+		if _, err := hex.DecodeString(request.PromptCacheKey[4:]); err != nil {
+			return errors.New("invalid host prompt cache key")
+		}
+		var prepared map[string]any
+		if err = json.Unmarshal(body, &prepared); err != nil {
+			return err
+		}
+		prepared["prompt_cache_key"] = request.PromptCacheKey
+		if body, err = json.Marshal(prepared); err != nil {
+			return err
+		}
+	}
 	if request.Protocol == 3 {
 		protocol = 3
 	}

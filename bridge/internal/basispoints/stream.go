@@ -98,6 +98,11 @@ func (b *Bridge) transformWithRepairs(ctx context.Context, reader io.Reader, wri
 	emitted := make(map[string]bool)
 	pendingTools := make(map[string]bool)
 	emit := func(kind string, payload object) error {
+		// Omit native instruction/catalog echoes, preserving output and state.
+		if response, ok := payload["response"].(object); ok {
+			delete(response, "instructions")
+			delete(response, "tools")
+		}
 		payload["type"] = kind
 		payload["sequence_number"] = sequence
 		sequence++

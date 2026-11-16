@@ -1,6 +1,6 @@
 {
   "name": "opencode-bps-auth",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Magpie provider for independent Excel/BPS OAuth and Responses inference",
   "type": "module",
   "main": "./index.mjs",
@@ -64,8 +64,8 @@
       "icon": "ui/icon.svg"
     },
     "summary": {
-      "zh": "Excel/BPS 授权、统一代理、推理与压缩、额度查询及手动重置",
-      "en": "Excel/BPS OAuth, proxy settings, inference, compaction and quota management"
+      "zh": "Excel/BPS 授权、统一代理、推理与压缩、额度与重置次数展示",
+      "en": "Excel/BPS OAuth, proxy settings, inference, compaction and quota display"
     },
     "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJCUFMiPjxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcng9IjE0IiBmaWxsPSIjMDg3RjVCIi8+PHJlY3QgeD0iMTUiIHk9IjEzIiB3aWR0aD0iMzQiIGhlaWdodD0iMzgiIHJ4PSI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMyIvPjxwYXRoIGQ9Ik0xNiAyNmgzMk0xNiAzOGgzMk0yOCAyNnYyNE0zOSAyNnYyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxwYXRoIGQ9Ik0yMiAxOWgyMCIgc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPgo="
   }

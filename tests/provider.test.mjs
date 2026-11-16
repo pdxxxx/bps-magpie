@@ -10,6 +10,7 @@ const input={model:"gpt-6-astra",input:"ping",stream:false};
 const send=(fetch,body=input,signal)=>fetch(BASE_URL+"/responses",{method:"POST",body:typeof body==="string"?body:JSON.stringify(body),signal});
 test("Magpie hook shape uses Responses, automatic models and scoped session headers",async()=>{
  const hooks=await BPSPlugin({client:{}},{models:["gpt-6-astra","custom-model"]});
+ assert.equal(Object.hasOwn(hooks,"tool"),false);assert.equal(Object.hasOwn(hooks,"tools"),false);assert.equal(typeof hooks.auth.usage,"function");assert.equal(hooks.auth.maxConcurrency,4);
  const cfg={};await hooks.config(cfg);assert.equal(cfg.provider["bps"].npm,"@ai-sdk/openai");assert.equal(hooks.auth.methods[0].type,"oauth");assert.deepEqual(cfg.provider["bps"].models,{});
  const output={headers:{}};await hooks["chat.headers"]({model:{providerID:"bps"},sessionID:"conversation"},output);assert.equal(output.headers["x-bps-session"],"conversation");
 });
@@ -43,6 +44,20 @@ test("invalid schemas and incomplete history fail before upstream",async()=>{
 });
 test("429 and 403 remain upstream errors without retry or sensitive body",async()=>{
  for(const status of [403,429,401]){let calls=0;const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async()=>{calls++;return new Response("SECRET_PROVIDER_BODY",{status,headers:{"retry-after":"31"}});}});const response=await send(fetch);assert.equal(response.status,status);assert.equal(response.headers.get("retry-after"),"31");assert.equal(response.headers.get("x-magpie-sign-in"),status===401?"expired":null);assert.doesNotMatch(await response.text(),/SECRET/);assert.equal(calls,1);}
+});
+
+test("upstream usage-policy refusal remains 403 without sign-out, replay or raw details",async()=>{
+ let calls=0;
+ const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async()=>{calls++;return Response.json({error:{message:'403: This request was blocked by our usage policy. PRIVATE_CONTEXT'}},{status:403});}});
+ const response=await send(fetch);const body=await response.json();
+ assert.equal(response.status,403);assert.equal(body.error.code,'basispoints_usage_policy_blocked');assert.equal(response.headers.get('x-magpie-sign-in'),null);assert.equal(calls,1);assert.doesNotMatch(JSON.stringify(body),/PRIVATE_CONTEXT/);
+});
+
+test('a stalled refusal body remains cancellable instead of hanging error classification',async()=>{
+ let ready;const arrived=new Promise(r=>{ready=r;});let cancelled=false;const abort=new AbortController();
+ const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async()=>{ready();return new Response(new ReadableStream({cancel(){cancelled=true;}}),{status:403,headers:{'content-type':'application/json'}});}});
+ const pending=send(fetch,input,abort.signal);await arrived;await new Promise(r=>setImmediate(r));abort.abort(new Error('cancel refusal'));
+ await assert.rejects(pending,/cancel refusal/);assert.equal(cancelled,true);
 });
 test("truncated SSE is not accepted as a successful nonstream response",async()=>{
  const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async()=>sse([{type:"response.output_text.delta",delta:"partial"}])});assert.equal((await send(fetch)).status,502);

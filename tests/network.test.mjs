@@ -4,7 +4,7 @@ import http from "node:http";
 import {createFetch,proxyOption,readJSON} from "../src/network.mjs";
 import {beginLogin} from "../src/auth.mjs";
 import {makeFetch} from "../src/provider.mjs";
-import {queryQuota,consumeReset,USAGE_URL,CREDITS_URL,CONSUME_URL} from "../src/quota.mjs";
+import {queryQuota,USAGE_URL,CREDITS_URL} from "../src/quota.mjs";
 import {BASE_URL,TOKEN_URL,REDIRECT_URI} from "../src/constants.mjs";
 import {auth,tokens,sse} from "./helpers.mjs";
 
@@ -22,17 +22,16 @@ test("inherit leaves the host scope intact while direct is explicit",async()=>{
  await createFetch({},{fetchImpl})("https://example.invalid",{});await createFetch({proxy:"direct"},{fetchImpl})("https://example.invalid",{});
  assert.equal("proxy" in seen[0],false);assert.equal(seen[1].proxy,"");
 });
-test("OAuth, inference, quota and reset use one configured network transport",async()=>{
+test("OAuth, inference and quota use one configured network transport",async()=>{
  const seen=[];const net=createFetch({proxy:"http://127.0.0.1:7891"},{fetchImpl:async(url,init)=>{
    seen.push(url);assert.equal(init.proxy,"http://127.0.0.1:7891/");
    if(url===TOKEN_URL)return Response.json(tokens());if(url===BASE_URL+"/responses")return sse();
-   if(url===CONSUME_URL)return Response.json({code:"success",windows_reset:1});
    return Response.json(url===USAGE_URL?{account_id:"workspace-a",plan_type:"plus"}:{available_count:2});
  }});
  const flow=await beginLogin(undefined,{}, {fetchImpl:net});const callback=new URL(REDIRECT_URI);callback.search=new URLSearchParams({code:"test-code",state:new URL(flow.url).searchParams.get("state")});assert.equal((await flow.callback(callback.href)).type,"success");
  const fetch=makeFetch(async()=>auth(),{current:async f=>f()},{},{fetchImpl:net});assert.equal((await fetch(BASE_URL+"/responses",{body:JSON.stringify({model:"gpt-6-astra",input:"hi"})})).status,200);
- await queryQuota(auth(),{fetchImpl:net});await consumeReset(auth(),"11111111-1111-4111-8111-111111111111",{fetchImpl:net});
- for(const url of [TOKEN_URL,BASE_URL+"/responses",USAGE_URL,CREDITS_URL,CONSUME_URL])assert.ok(seen.includes(url));
+ await queryQuota(auth(),{fetchImpl:net});
+ for(const url of [TOKEN_URL,BASE_URL+"/responses",USAGE_URL,CREDITS_URL])assert.ok(seen.includes(url));
 });
 test("bounded JSON cancels oversized streaming data without a content length",async()=>{
  let cancelled=false;let reads=0;

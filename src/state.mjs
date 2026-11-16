@@ -1,11 +1,18 @@
 import {createHash} from "node:crypto";
 
 const fault=message=>Object.assign(new Error(message),{status:400,code:"basispoints_previous_response_not_found"});
+export function accountScope(auth){
+  return createHash("sha256").update(JSON.stringify([auth.clientId,auth.uid||auth.subject||auth.accountId,auth.workspaceId])).digest("hex");
+}
+export function promptRoutingKey(auth,source){
+  if(typeof source.prompt_cache_key!=="string"||!source.prompt_cache_key)return undefined;
+  return 'bps-'+createHash('sha256').update(JSON.stringify([accountScope(auth),source.model,source.prompt_cache_key])).digest('hex').slice(0,32);
+}
 export function conversationScope(auth,headers,model){
   // A child thread must never inherit its parent agent's tool catalog.
   const thread=headers.get("thread-id")||headers.get("x-bps-session")||headers.get("session_id");
   if(!thread || typeof model!=="string" || !model)return null;
-  const owner=createHash("sha256").update(JSON.stringify([auth.clientId,auth.uid||auth.subject||auth.accountId,auth.workspaceId])).digest("hex");
+  const owner=accountScope(auth);
   return {owner,key:createHash("sha256").update(JSON.stringify([owner,thread,model])).digest("hex")};
 }
 

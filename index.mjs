@@ -3,16 +3,14 @@ import { makeFetch } from "./src/provider.mjs";
 import { fetchModelCatalog } from "./src/models.mjs";
 import { PROVIDER, BASE_URL, REFRESH_LEAD } from "./src/constants.mjs";
 import { queryQuota } from "./src/quota.mjs";
-import { managementTools } from "./src/management.mjs";
 import { createFetch } from "./src/network.mjs";
 import {createConversationStore} from "./src/state.mjs";
-import {diagnose} from "./src/diagnostics.mjs";
+import {createAttachmentStore} from "./src/attachments.mjs";
 
 // Export only the plugin; Magpie treats every exported function as a plugin.
-export const BPSPlugin=async ({client,directory},options={})=>{
+export const BPSPlugin=async ({client},options={})=>{
   if(options.continuationCache!==undefined&&typeof options.continuationCache!=="boolean")throw new Error("continuationCache must be a boolean");
-  const network={fetchImpl:createFetch(options),state:createConversationStore({enabled:options.continuationCache!==false})};
-  network.diagnose=()=>diagnose(options,network.state);
+  const network={fetchImpl:createFetch(options),state:createConversationStore({enabled:options.continuationCache!==false}),attachments:createAttachmentStore()};
   const credentials=createCredentialManager(client,network);
   return {
     config:async cfg=>{
@@ -28,7 +26,6 @@ export const BPSPlugin=async ({client,directory},options={})=>{
       },
       async loader(getAuth){return {baseURL:BASE_URL,apiKey:"magpie-bps-managed",fetch:makeFetch(getAuth,credentials,options,network)};}
     },
-    tool:managementTools({directory,deps:network}),
     provider:{id:PROVIDER,async models(_provider,{auth}={}){return auth?.type==="oauth"?fetchModelCatalog(auth,network):{};}},
     "chat.headers":async(input,output)=>{
       if(input.model?.providerID===PROVIDER && input.sessionID){output.headers??={};output.headers["x-bps-session"]=input.sessionID;}

@@ -11,6 +11,9 @@ import (
 func (b *Bridge) toolExamples() string {
 	names := make([]string, 0, len(b.tools))
 	for name := range b.tools {
+		if selected := b.selectedCatalogName(); selected != "" && selected != name {
+			continue
+		}
 		names = append(names, name)
 	}
 	sort.Strings(names)

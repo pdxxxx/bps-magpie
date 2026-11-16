@@ -120,3 +120,29 @@ func (b *Bridge) toolInvocationInstructions() string {
 	}
 	return "Invoke native run_officejs only when a client tool is necessary for the user request; otherwise answer directly without any tool call."
 }
+
+// Limit presentation only. The full tools map and persisted catalog still
+// validate history, restore continuations, and enforce the selected target.
+func (b *Bridge) selectedCatalogName() string {
+	if b.selectedTool == nil {
+		return ""
+	}
+	if b.selectedTool.Namespace != "" {
+		return b.selectedTool.Namespace + "." + b.selectedTool.Name
+	}
+	return b.selectedTool.Name
+}
+
+func (b *Bridge) promptCatalog(catalog []any) []any {
+	name := b.selectedCatalogName()
+	if name == "" {
+		return catalog
+	}
+	for _, raw := range catalog {
+		entry, _ := raw.(object)
+		if text(entry["name"]) == name {
+			return []any{raw}
+		}
+	}
+	return catalog
+}

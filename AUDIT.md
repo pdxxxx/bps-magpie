@@ -1,6 +1,25 @@
 # BPS integration audit
 
-Version 0.4.5.
+Version 0.4.6.
+
+## Provider-only and bounded performance changes
+
+The plugin exports no tool hook and registers zero MCP tools with the agent.
+Account listing, reset actions and receipt-management callbacks were removed.
+Magpie retains OAuth, model discovery, inference and read-only quota/credit display.
+Existing receipt files are not touched.
+
+Selected-tool presentation narrows only prompt material, retaining the complete
+internal validation/history catalog. Attachment IDs are cached in the host by
+account/workspace and content hash, bounded by capacity, TTL and in-flight work.
+Waiter cancellation and cache invalidation do not cancel unrelated active callers.
+Explicit prompt routing keys are independent of history identity. Native tool
+and instruction echoes are omitted without removing response state or usage.
+
+Concurrency remains four. Process pooling, delayed stream buffering, automatic
+artifact splitting and experimental parallel batching are not enabled. The
+live experiment ended on an explicit upstream usage-policy refusal affecting
+both baseline and candidate, despite a permitted model catalog. See VALIDATION.md.
 
 ## Native tool schema and invocation hints
 
@@ -91,15 +110,15 @@ sanitization, compaction, opaque-state preservation and image reprepare.
 - Automatic allowed-model catalog and normalized reasoning capabilities.
 - One proxy policy for authorization, models, inference, attachments and quota.
 - Scoped, bounded in-memory continuation and tool-catalog cache.
-- Quota/reset-credit display and account-bound manual reset receipts.
+- Read-only quota/reset-credit display through the provider usage hook.
 - Complete terminal validation before dispatching any client tool call.
 
 ## Verification boundary
 
-Version 0.4.5: Node 124 pass and one Bun-only skip; bundled Bun 1.4.2
-125 pass across the 14 root test files.
+Version 0.4.6: Node 125 pass and one Bun-only skip; bundled Bun 1.4.2
+126 pass across the 18 root test files.
 Go tests, vet, build and native sandbox host loading pass.
-Real signed-in text and tool-result requests complete. The reported local
+Earlier real signed-in text and tool-result requests completed. The reported local
 conversation completed in about 65 seconds after reload, through three BPS
 rounds and two tool calls, with a final answer of 21.
 
