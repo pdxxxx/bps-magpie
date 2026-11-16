@@ -1,5 +1,7 @@
-import {randomBytes} from 'node:crypto';
-import {createServer} from 'node:http';
+import {mkdir,open,rename,unlink,readdir,stat,lstat} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {relayOptions} from './relay.mjs';
 
 // A dedicated diagnostic socket cannot mistake a production heartbeat for
@@ -40,32 +42,40 @@ export function measureRelay(config,{dial=(url,opts)=>new WebSocket(url,opts),cl
  });
 }
 
-const port=39846;
-// A Magpie page service, available on loopback only. The opaque ID is
-// scoped to testing this saved configuration. Never put the relay key in a URL.
-export function startProbePage(options){
- const config=relayOptions(options),id=options.relayProbeId;
- if(!config||typeof id!=='string'||!/^[a-f0-9]{32}$/.test(id))return;
- let running;
- const server=createServer(async(req,res)=>{
-  const nonce=randomBytes(16).toString('base64');
-  res.setHeader('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+nonce+"'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'");
-  res.setHeader('Content-Type','text/html; charset=utf-8');
-  res.setHeader('Cache-Control','no-store');
-  res.setHeader('Referrer-Policy','no-referrer');
-  res.setHeader('X-Content-Type-Options','nosniff');
-  const render=(status,title,detail)=>{
-   res.statusCode=status;
-   res.end('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>测试 WSS</title><style>:root{color-scheme:light dark;font:16px system-ui}main{max-width:32em;margin:3em auto;padding:1em}button{font:inherit;padding:.4em .8em}</style><main><small>BPS · WSS 中继</small><h2>'+title+'</h2><p>'+detail+'</p><button id="back">返回设置</button></main><script nonce="'+nonce+'">document.getElementById("back").onclick=()=>history.back()</script></html>');
-  };
-  if(req.headers.host!=='127.0.0.1:'+port||req.method!=='GET'||req.url!=='/probe/'+id){render(404,'无法测试此配置','请重新启用 BPS 插件，打开设置后重试。');return;}
-  try{
-   running??=measureRelay(config).finally(()=>{running=undefined;});
-   const {median,values}=await running;
-   render(200,'WSS 已连通 · '+median+' ms','本机到中继的三次往返：'+values.join(' / ')+' ms。显示中位数，不含建立连接、认证或模型推理。');
-  }catch(err){render(502,'WSS 测试失败',err.message);}
- });
- server.on('error',()=>console.warn('BPS: WSS diagnostic page could not bind its local port'));
- server.listen(port,'127.0.0.1');server.unref();
- return server;
+// Static page images are a supported Magpie plugin resource. The provider
+// writes an inert status card; the UI never changes origin or opens a socket.
+const defaultDir=fileURLToPath(new URL('../ui/probe-results/',import.meta.url));
+function card(ok,heading,detail){
+ const bg=ok?'#e3f4ea':'#fbe8e7',fg=ok?'#124831':'#7a211a';
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="92" viewBox="0 0 500 92" role="img"><title>'+heading+'。'+detail+'</title><rect width="500" height="92" rx="10" fill="'+bg+'"/><g fill="'+fg+'" font-family="system-ui,sans-serif"><text x="16" y="35" font-size="20">'+heading+'</text><text x="16" y="65" font-size="15">'+detail+'</text></g></svg>';
+}
+export async function runRequestedProbe(options,{dir=defaultDir,measure=measureRelay,now=Date.now}={}){
+ const t=options.relayTest;
+ if(!t||!options.relayEnabled||typeof t.id!=='string'||!(/^[a-f0-9]{32}$/).test(t.id)||!Number.isSafeInteger(t.at)||t.at>now()+2000||now()-t.at>95000)return;
+ const cfg=relayOptions(options);
+ await mkdir(dir,{recursive:true,mode:0o700});
+ if(!(await lstat(dir)).isDirectory())throw Error('Invalid result directory');
+ for(const item of await readdir(dir,{withFileTypes:true})){
+  if(!item.isFile()||!/^[a-f0-9]{32}\.(?:lock|svg|[a-f0-9-]{36}\.tmp)$/.test(item.name))continue;
+  const name=path.join(dir,item.name);
+  if(await stat(name).then(s=>now()-s.mtimeMs>10*60*1000,()=>false))await unlink(name).catch(()=>{});
+ }
+ const base=path.join(dir,t.id);
+ // Short-lived lock also deduplicates helper CLI hosts seeing the same option.
+ let lock;
+ try{lock=await open(base+'.lock','wx',0o600);}catch(e){if(e.code==='EEXIST')return;throw e;}
+ await lock.close();
+ let result;
+ try{
+  const {median,values}=await measure(cfg);
+  if(values.length!==3||![median,...values].every(x=>Number.isFinite(x)&&x>=0))throw Error('Invalid sample');
+  result=card(true,'WSS 已连通 · '+median+' ms','三次往返：'+values.join(' / ')+' ms（不含建连）');
+ }catch(e){
+  const causes=['等待中继 pong 超时','中继握手超时','中继协议响应无效'];
+  result=card(false,'WSS 测试失败',causes.includes(e.message)?e.message:'请检查地址、密钥和网络后重试。');
+ }
+ const temp=base+'.'+randomUUID()+'.tmp';
+ const file=await open(temp,'wx',0o600);
+ try{await file.writeFile(result);}finally{await file.close();}
+ await rename(temp,base+'.svg');
 }

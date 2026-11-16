@@ -70,7 +70,7 @@ async function load(){
 element("mode").addEventListener("change",networkNote);
 element('relayEnabled').addEventListener('change',relayNote);
 for(const id of ["mode","proxy","seconds","relayUrl","relayToken","cache","relayEnabled"]){
- element(id).addEventListener("input",()=>announce("有未保存的修改。",false,"dirty"));
+ element(id).addEventListener("input",()=>{element("probe-panel").hidden=true;announce("有未保存的修改。",false,"dirty");});
  element(id).addEventListener("change",()=>announce("有未保存的修改。",false,"dirty"));
 }
 async function testRelay(){
@@ -78,28 +78,50 @@ async function testRelay(){
  if(!next.relayEnabled)throw new Error("请先勾选“手动启用 WSS 中继”并保存。");
  const expected=fieldsFromOptions(next),actual=fieldsFromOptions(saved);
  for(const key of ["relayEnabled","relayUrl","relayToken"]){if(actual[key]!==expected[key])throw new Error("请先保存当前中继配置，再开始测试。");}
- if(!/^[a-f0-9]{32}$/.test(saved.relayProbeId||""))throw new Error("请先用新版保存一次，再测试。");
- const local=["localhost","wails.localhost","127.0.0.1","[::1]"].includes(location.hostname)||location.protocol==="wails:";
- if(!magpie.service&&!local)throw new Error("无法打开此电脑的插件服务，请在 Magpie 桌面端测试。");
- const service=new URL(magpie.service||"http://127.0.0.1:39846/",location.href);
- if(!service.pathname.endsWith("/"))service.pathname+="/";
- const result=new URL("probe/"+saved.relayProbeId,service);
- announce("正在连接中继。握手完成后测量三次通信往返…",false,"testing");
- location.assign(result.href);
+ const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join("");
+ const test={id,at:Date.now()};
+ const host=await bounded(magpie.options.get())||{};
+ if(["relayEnabled","relayUrl","relayToken"].some(k=>host[k]!==saved[k]))throw new Error("配置已改变，请重新读取。");
+ await bounded(magpie.options.set({...host,relayTest:test}));
+ saved={...host,relayTest:test};
+ await showProbe(test);
 }
-element("testRelay").addEventListener("click",()=>testRelay().catch(error=>announce("WSS 测试失败："+(error.message||"未能完成测试。"),true,"error")));
+async function showProbe(test){
+ const img=element("probe-image"),button=element("testRelay");button.disabled=true;
+ element("probe-panel").hidden=false;img.hidden=true;
+ announce("正在测试 WSS… 握手后测量三次往返。",false,"testing");
+ const until=Date.now()+95000;
+ try{
+  // The host serves its own page images in the sandbox. Result cards contain
+  // only public status text and timings, with a separate name per test.
+  for(let i=0;Date.now()<until;i++){
+   const received=await new Promise(resolve=>{
+    const timeout=setTimeout(()=>settle(false),2000);
+    function settle(ok){clearTimeout(timeout);img.onload=img.onerror=null;resolve(ok);}
+    img.onload=()=>settle(true);img.onerror=()=>settle(false);
+    img.src="probe-results/"+test.id+".svg?read="+i;
+   });
+   if(received){img.hidden=false;announce("测试已完成。",false,"tested");return;}
+   await new Promise(resolve=>setTimeout(resolve,700));
+  }
+  throw new Error("没有收到本次结果。请确认 BPS 已启用且插件目录可写，再重试。");
+ }finally{img.onload=img.onerror=null;button.disabled=false;}
+}
+let busy=false;
+element("testRelay").addEventListener("click",async()=>{
+ if(busy)return;busy=true;element("controls").disabled=true;
+ try{await testRelay();}catch(error){element("probe-panel").hidden=true;announce("WSS 测试失败："+(error.message||"未能完成测试。"),true,"error");}
+ finally{busy=false;element("controls").disabled=false;}
+});
 element("reload").addEventListener("click",()=>load().catch(e=>announce(e.message,true)));
 element("save").addEventListener("click",async ()=>{
  try{
   const fields=currentFields(),next=optionsFromFields(fields,saved);
-  if(next.relayEnabled){
-   const same=saved.relayEnabled===true&&next.relayUrl===saved.relayUrl&&next.relayToken===saved.relayToken&&/^[a-f0-9]{32}$/.test(saved.relayProbeId||"");
-   next.relayProbeId=same?saved.relayProbeId:Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join("");
-  }else delete next.relayProbeId;
+  delete next.relayTest;delete next.relayProbeId;
   element("controls").disabled=true;announce("正在保存设置…",false,"saving");
   await bounded(magpie.options.set(next));
   const confirmed=await bounded(magpie.options.get())||{};
-  if(!Object.keys(next).every(key=>Object.hasOwn(confirmed,key))||confirmed.relayProbeId!==next.relayProbeId)throw new Error("Magpie 未确认保存，请重新读取设置。");
+  if(!Object.keys(next).every(key=>Object.hasOwn(confirmed,key)))throw new Error("Magpie 未确认保存，请重新读取设置。");
   const expected=fieldsFromOptions(next),actual=fieldsFromOptions(confirmed);
   for(const key of ["mode","proxy","seconds","cache","relayEnabled","relayUrl","relayToken"]){
    if(actual[key]!==expected[key])throw new Error("Magpie 未确认保存，请重试。");

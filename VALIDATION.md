@@ -1,14 +1,14 @@
-# BPS 0.4.8 validation
+# BPS 0.4.9 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.4.8 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.4.9 / protocol 3, legacy 2 accepted |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 134 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 135 pass across the 20 root test files |
+| Node integration tests | 136 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.2 | 137 pass across the 20 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Native host agent tools | Zero; provider-only |
 
@@ -18,9 +18,9 @@ tool histories, attachments, compaction, continuation cache and read-only quota.
 Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
 
-## Version 0.4.8 settings and WSS diagnostics
+## Version 0.4.9 settings and WSS diagnostics
 
-Confirmed save and read-back in the desktop sandbox. The real test button completed three authenticated application-level ping/pong exchanges on one socket. Timings start after the relay hello; no BPS model call is made by the diagnostic. A separate Magpie Responses provider test succeeded.
+Confirmed save and read-back in the desktop sandbox. Inline results stay in the configuration document; no navigation, external diagnostic port or return page remains. Repeated test, re-read and leaving/reopening settings were checked in the Windows app. Invalid-token live test failed explicitly. The real test button completed three authenticated application-level ping/pong exchanges on one socket. Timings start after the relay hello; no BPS model call is made by the diagnostic. A separate Magpie Responses provider test succeeded.
 
 ## Version 0.4.7 optional relay
 

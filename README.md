@@ -1,6 +1,6 @@
 # BPS for Magpie
 
-当前版本：0.4.8。仅作为 Magpie provider，增加默认关闭、手动配置的可选 WSS 中继通道。
+当前版本：0.4.9。仅作为 Magpie provider，增加默认关闭、手动配置的可选 WSS 中继通道。
 
 独立 Magpie / OpenCode provider：Excel/BPS OAuth 授权、令牌刷新、Responses
 推理、流式文本与工具往返，以及 ChatGPT/Codex 额度与可用重置次数展示。
@@ -10,7 +10,7 @@
 ## 安装
 
 在 [GitHub Releases](https://github.com/pdxxxx/bps-magpie/releases) 下载
-`bps-magpie-0.4.8-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
+`bps-magpie-0.4.9-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
 Add a plugin 中填写解压后的 `bps-magpie` 目录。Windows x64 发布包已包含转换程序，
 不需要安装 Node.js 或 Go。也可执行（将路径替换为实际解压目录）：
 
@@ -67,7 +67,7 @@ SOCKS 代理请配置在 Magpie 中并选择跟随。连接失败不会自动回
 `http://用户名:密码@主机:端口`，用户名或密码中的 `@`、`:`、`/`、`%` 等特殊字符
 需要 URL 编码。插件显式指定代理或直连时会覆盖宿主代理选择。
 
-点击「保存」后，看到「已保存并确认」表示已从 Magpie 回读配置。重新启用 BPS 后，点「测试 WSS」可测量本机到所配置中继的往返延迟：在认证后的同一条连接发送三次 ping，显示 RTT 中位数。测试不向模型发请求、不含 DNS、TCP、TLS、WebSocket 握手或模型处理时间。模型来自上游权限接口，旧 options.models 会被忽略，
+点击「保存」后，看到「已保存并确认」表示已从 Magpie 回读配置。重新启用 BPS 后，点「测试 WSS」在设置页内可测量本机到所配置中继的往返延迟：在认证后的同一条连接发送三次 ping，显示 RTT 中位数。设置页保持打开，测试结果原地显示；请将插件放在当前用户可写的目录。测试不向模型发请求、不含 DNS、TCP、TLS、WebSocket 握手或模型处理时间。模型来自上游权限接口，旧 options.models 会被忽略，
 下次保存设置时移除。没有写入推测的上下文长度、价格或账号权限。
 
 ## 可选 WSS 中继

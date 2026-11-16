@@ -39,3 +39,14 @@ test("save works inside a scripts-only sandbox and never reports an unconfirmed 
  assert.equal(page.elements.get("status").dataset.state,"error");
  assert.match(page.elements.get("status").textContent,/未确认保存/);
 });
+
+test("settings keeps the current document for WSS success and re-enables the controls",async()=>{
+ let saved={relayEnabled:true,relayUrl:"wss://relay.example/relay",relayToken:"test".repeat(10)};
+ const page=await bundledPage({ready:Promise.resolve(),options:{get:async()=>saved,set:async value=>{saved=value;return value;}}});
+ const el=page.elements,img=el.get("probe-image");let imageUrl="";
+ Object.defineProperty(img,"src",{set(url){imageUrl=url;queueMicrotask(()=>img.onload());}});
+ await el.get("testRelay").listeners.click();
+ assert.match(imageUrl,/^probe-results\/[a-f0-9]{32}\.svg/);assert.equal(el.get("probe-panel").hidden,false);assert.equal(img.hidden,false);assert.equal(el.get("controls").disabled,false);
+ assert.doesNotMatch(page.source,/location\.(assign|replace)|history\.back/);
+ el.get("relayToken").value="test".repeat(11);await el.get("testRelay").listeners.click();assert.match(el.get("status").textContent,/先保存/);
+});
