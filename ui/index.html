@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BPS 设置</title><link rel="stylesheet" href="style.css"><script src="_magpie/bridge.js"></script><script src="app.bundle.js" defer></script></head>
+<body><main>
+<header class="brand"><img src="icon.svg" width="36" height="36" alt=""><h1>BPS</h1></header>
+<form id="settings"><fieldset id="controls" disabled>
+<label for="mode">代理</label>
+<select id="mode"><option value="inherit">跟随 Magpie</option><option value="proxy">指定代理</option><option value="direct">直连</option></select>
+<div id="proxy-row" hidden><label for="proxy">HTTP(S) 代理地址</label><input id="proxy" type="password" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:7891"></div>
+<p id="network-note" class="note"></p>
+<details><summary>高级选项</summary><div class="advanced">
+<label for="seconds">请求超时（秒）</label><input id="seconds" type="number" min="1" max="3600" step="1" required>
+<label class="toggle" for="cache"><input id="cache" type="checkbox">缓存会话上下文</label>
+</div></details>
+<div class="actions"><button type="submit">保存</button><button type="button" id="reload">重新读取</button></div>
+</fieldset></form>
+<p id="status" role="status" aria-live="polite">正在连接 Magpie…</p>
+</main></body></html>

@@ -1,0 +1,553 @@
+{
+  "repository": "https://api.github.com/repositories/1135073661",
+  "branch": "production",
+  "commit": "b9feadf7dd6228a4117e360821d9994b7cc54897",
+  "retrieved": "2026-11-16",
+  "modifications": [
+    "bridge/internal/basispoints/image_relay.go: self-contained local urlvalidator import",
+    "bridge/internal/basispoints/image_relay_disk_test.go: POSIX permission-bit assertions apply only off Windows; file lifecycle assertions remain active",
+    "Go module and internal imports use github.com/pdxxxx/bps-magpie/bridge.",
+    "Internal search helper identifier uses the BPS namespace.",
+    "Attribution retains author names, commit identifiers and stable repository-ID links; project-specific wording is normalized."
+  ],
+  "files": [
+    {
+      "source": "backend/internal/service/basispoints/agent_assignment_test.go",
+      "destination": "bridge/internal/basispoints/agent_assignment_test.go",
+      "sha256": "bce0da5b7e14e44efeb0d98ada8fd1063536a01c33ad5f80c19bc0b436bd4d03"
+    },
+    {
+      "source": "backend/internal/service/basispoints/agent_assignment.go",
+      "destination": "bridge/internal/basispoints/agent_assignment.go",
+      "sha256": "cfd6c73e987e96649a003d1b3d8a9d6926d7093fe582dddd6a24b92035b12261"
+    },
+    {
+      "source": "backend/internal/service/basispoints/agent_message_test.go",
+      "destination": "bridge/internal/basispoints/agent_message_test.go",
+      "sha256": "aa3c5d0d366bb1bd22d85bb93325337ed6f067d04352a474ac378b9aaaeffa0b"
+    },
+    {
+      "source": "backend/internal/service/basispoints/attachments_test.go",
+      "destination": "bridge/internal/basispoints/attachments_test.go",
+      "sha256": "62d7715446d119b89b52b463b46ccfe0189b45e2ae3bcf81a19ca80eaba61655"
+    },
+    {
+      "source": "backend/internal/service/basispoints/attachments.go",
+      "destination": "bridge/internal/basispoints/attachments.go",
+      "sha256": "b89473f6fb0fbc73633a1a9fb81680aaa026a910d1f8d492e273d10ae96be4c3"
+    },
+    {
+      "source": "backend/internal/service/basispoints/basispoints_test.go",
+      "destination": "bridge/internal/basispoints/basispoints_test.go",
+      "sha256": "2584f750bd9357001d416503c85859d4d92221a8f31a38a7314480c85e43a3f1"
+    },
+    {
+      "source": "backend/internal/service/basispoints/bridge_failure.go",
+      "destination": "bridge/internal/basispoints/bridge_failure.go",
+      "sha256": "5d8dd388e32f71c3df0baf1fec6ae9d752f589c1dac01c90fea7f4f8a52e4db2"
+    },
+    {
+      "source": "backend/internal/service/basispoints/catalog_cache.go",
+      "destination": "bridge/internal/basispoints/catalog_cache.go",
+      "sha256": "9ed4b2739aaa5d118d72bcc8e67fb8324b7b01b474fb66da1149d41e5ebf29b8"
+    },
+    {
+      "source": "backend/internal/service/basispoints/catalog_compact_test.go",
+      "destination": "bridge/internal/basispoints/catalog_compact_test.go",
+      "sha256": "432adb141dc27a5d1a30e54a48d6e0e4d51221ba6c7c1da4951cdb2075be6442"
+    },
+    {
+      "source": "backend/internal/service/basispoints/catalog_items_test.go",
+      "destination": "bridge/internal/basispoints/catalog_items_test.go",
+      "sha256": "1710dc2ef68065c816846c8778a533b280c831aafc0d5b1e5e89cbae9553d590"
+    },
+    {
+      "source": "backend/internal/service/basispoints/catalog_items.go",
+      "destination": "bridge/internal/basispoints/catalog_items.go",
+      "sha256": "80bc483cb214ba4354fc6169cf89132c4bd5bed41a62d55d5f1b34f2579ce818"
+    },
+    {
+      "source": "backend/internal/service/basispoints/catalog_test.go",
+      "destination": "bridge/internal/basispoints/catalog_test.go",
+      "sha256": "71ba1a4651ad7d491c778c6e6cb19a7070ee0a4bc26917b741e75636899e450b"
+    },
+    {
+      "source": "backend/internal/service/basispoints/catalog.go",
+      "destination": "bridge/internal/basispoints/catalog.go",
+      "sha256": "b57465d411692f238e181c9a024555059e3295e0425054bba45ef60567d2deac"
+    },
+    {
+      "source": "backend/internal/service/basispoints/content_diagnostics_test.go",
+      "destination": "bridge/internal/basispoints/content_diagnostics_test.go",
+      "sha256": "8efdc88ab10ab427ef691547e4c96de55f2fb9eeebb4161035eae5d4627d573f"
+    },
+    {
+      "source": "backend/internal/service/basispoints/content_test.go",
+      "destination": "bridge/internal/basispoints/content_test.go",
+      "sha256": "ffd960c594136f81b0bf517bdc4af33d138bbbdef9bd4b16b0acd7c21ddb06db"
+    },
+    {
+      "source": "backend/internal/service/basispoints/content.go",
+      "destination": "bridge/internal/basispoints/content.go",
+      "sha256": "7b0c307a4ddce29d729f8352a9e8d19aeca6885b2e9bd40bbf288ca20b445b8e"
+    },
+    {
+      "source": "backend/internal/service/basispoints/context_boundaries_test.go",
+      "destination": "bridge/internal/basispoints/context_boundaries_test.go",
+      "sha256": "c53e206db6c5a7d6b785013403485cb3334c55a289c2ebe3f9a8ff660f81d6ab"
+    },
+    {
+      "source": "backend/internal/service/basispoints/custom_history_transport_test.go",
+      "destination": "bridge/internal/basispoints/custom_history_transport_test.go",
+      "sha256": "0391f51355bff2895574192956137cccd327cb06439994dfc6e0a5f3244f1aa5"
+    },
+    {
+      "source": "backend/internal/service/basispoints/custom_transport_test.go",
+      "destination": "bridge/internal/basispoints/custom_transport_test.go",
+      "sha256": "f53fb2b2f79e688ea77c8c85cf68d40738a8844f3c6715bcd5da424b2422a85c"
+    },
+    {
+      "source": "backend/internal/service/basispoints/custom_transport.go",
+      "destination": "bridge/internal/basispoints/custom_transport.go",
+      "sha256": "6ed8175b451a23da5ca263e5afeedd92d7feecab4075ff0975e672414c6735bf"
+    },
+    {
+      "source": "backend/internal/service/basispoints/deep_audit_test.go",
+      "destination": "bridge/internal/basispoints/deep_audit_test.go",
+      "sha256": "b17bf55449e525dc8c136315088b9c3f09eb7db10fdc54e05fe17ef4dd6262e1"
+    },
+    {
+      "source": "backend/internal/service/basispoints/deep_envelope_test.go",
+      "destination": "bridge/internal/basispoints/deep_envelope_test.go",
+      "sha256": "7d4511b569dfa2fe481532b73a0db811d87b46a72d36369d199e027a276697f2"
+    },
+    {
+      "source": "backend/internal/service/basispoints/direct_call_test.go",
+      "destination": "bridge/internal/basispoints/direct_call_test.go",
+      "sha256": "b3c6447cd55524d5e5f3c25b8b76b888006a48ec482173c76df0351a8be5c355"
+    },
+    {
+      "source": "backend/internal/service/basispoints/encrypted_content_test.go",
+      "destination": "bridge/internal/basispoints/encrypted_content_test.go",
+      "sha256": "d80423836ce108febee855dcadb09131158ffc0dc63b8c4c54767a6e70fc4356"
+    },
+    {
+      "source": "backend/internal/service/basispoints/encrypted_content.go",
+      "destination": "bridge/internal/basispoints/encrypted_content.go",
+      "sha256": "6c5f74d38c23ed563f1ce6d3024f38fc90a9c54af4f408f22ab3b4f65de8a173"
+    },
+    {
+      "source": "backend/internal/service/basispoints/envelope_test.go",
+      "destination": "bridge/internal/basispoints/envelope_test.go",
+      "sha256": "511bfe85d88577638f2d0a31c1fa971da7a7106a7e2e369074cc2e9b085c776c"
+    },
+    {
+      "source": "backend/internal/service/basispoints/envelope.go",
+      "destination": "bridge/internal/basispoints/envelope.go",
+      "sha256": "fa1d0c87193a0ae254142cf2753bb399bb91b588550ad5d3c36c298f0f0bc15c"
+    },
+    {
+      "source": "backend/internal/service/basispoints/function_cmd_transport_test.go",
+      "destination": "bridge/internal/basispoints/function_cmd_transport_test.go",
+      "sha256": "b4b01d1b695f571576e328e3f3323c08f3807878b9082a6e938099dfd9e81ee9"
+    },
+    {
+      "source": "backend/internal/service/basispoints/function_cmd_transport.go",
+      "destination": "bridge/internal/basispoints/function_cmd_transport.go",
+      "sha256": "bc335a69fd61013308f717b2dd26ed2573c21f8882cbe213d4a94d912c8f5a53"
+    },
+    {
+      "source": "backend/internal/service/basispoints/function_code_branches_test.go",
+      "destination": "bridge/internal/basispoints/function_code_branches_test.go",
+      "sha256": "8ca5ec293be802b1edca31ff6d91637773e7e8566dc0e328cf024248fed3f655"
+    },
+    {
+      "source": "backend/internal/service/basispoints/function_code_transport_test.go",
+      "destination": "bridge/internal/basispoints/function_code_transport_test.go",
+      "sha256": "2ae12846716b3de38bf3a1b37666370fac602a525538c3a44fb852ae5d66c32b"
+    },
+    {
+      "source": "backend/internal/service/basispoints/function_code_transport.go",
+      "destination": "bridge/internal/basispoints/function_code_transport.go",
+      "sha256": "5b033e90dfa27939a7df2e26caacdbc549b210af6bc1d4cbf8ee8d889e86170f"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_collision_test.go",
+      "destination": "bridge/internal/basispoints/history_collision_test.go",
+      "sha256": "65ef9109ed09033fb8a80ff0a0a03056b95637d6ac4392fd26eaf1ea7b4e17d2"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_delegation_test.go",
+      "destination": "bridge/internal/basispoints/history_delegation_test.go",
+      "sha256": "ed9beb57bc3389dccc195d94435f3c5c9430ad8fa0c42f341611f71e7e322ca0"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_message_id_test.go",
+      "destination": "bridge/internal/basispoints/history_message_id_test.go",
+      "sha256": "f212b16366116830f42e2b772593a339ae9d09993a94702faf5a2557b7e08169"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_message_images_test.go",
+      "destination": "bridge/internal/basispoints/history_message_images_test.go",
+      "sha256": "e37554f915f0db37fcc9c60a99ff176957beeeb17adaf53ee7928ac806504547"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_messages_test.go",
+      "destination": "bridge/internal/basispoints/history_messages_test.go",
+      "sha256": "52fb16836681e5c618f4f422e5d59f3c12a14e193310d10c39fec7b7465de9ac"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_messages.go",
+      "destination": "bridge/internal/basispoints/history_messages.go",
+      "sha256": "8fbed4c60100dea88f0501e6d2c2724e2fba6bf0b359de74acf82a88cce33283"
+    },
+    {
+      "source": "backend/internal/service/basispoints/history_recovery_test.go",
+      "destination": "bridge/internal/basispoints/history_recovery_test.go",
+      "sha256": "afc5a9b2c691a3aef11cd138ef1e68590a7488a205ef8d13f9d7888c32f2584f"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_capacity.go",
+      "destination": "bridge/internal/basispoints/image_capacity.go",
+      "sha256": "4a6e2338e4eb0fad01990408d6447b306194cc838bea2a370370ca819398cc02"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_file_reference_test.go",
+      "destination": "bridge/internal/basispoints/image_file_reference_test.go",
+      "sha256": "55d348ba41e72f5c53f4d93816166a1c19b30c6342b72f852974506aadda3d55"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_policy_stream.go",
+      "destination": "bridge/internal/basispoints/image_policy_stream.go",
+      "sha256": "ff80a55815ee94c6bacdeb2e95905e896beaa6a4e612fb9ecd6e13864dc5280d"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_policy_test.go",
+      "destination": "bridge/internal/basispoints/image_policy_test.go",
+      "sha256": "2bd34cb0ee03f88c5fab2eb08cdc8a0980079cbfef49fa6bab05392b8f27b565"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_policy.go",
+      "destination": "bridge/internal/basispoints/image_policy.go",
+      "sha256": "7e170651098b414393e977d1ce819b3293fd89f9ec02dd74a04d205d039671aa"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_relay_disk_test.go",
+      "destination": "bridge/internal/basispoints/image_relay_disk_test.go",
+      "sha256": "7f90aab40b270ffa0c57ba321d049ab08b281496fb911756534a3e71a956d924"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_relay_limits_test.go",
+      "destination": "bridge/internal/basispoints/image_relay_limits_test.go",
+      "sha256": "4b261fe10d6cb08cbfa43849057b468db3149fb3b93304a6aac031e350ca00c0"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_relay_limits.go",
+      "destination": "bridge/internal/basispoints/image_relay_limits.go",
+      "sha256": "1b2f461fbc091b6d798d98d535c4b58a79c8533d9cca0c7fa8f61d5d15ae3822"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_relay_owner_expiry_test.go",
+      "destination": "bridge/internal/basispoints/image_relay_owner_expiry_test.go",
+      "sha256": "f4fdd6ad888bb87ae008532886cddcf12874d66e38f450c6a62e0104fdeb11bb"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_relay_test.go",
+      "destination": "bridge/internal/basispoints/image_relay_test.go",
+      "sha256": "737890c2d462f315430d7f4734b89ad4efaa85453c5efb2afa819aacc3444797"
+    },
+    {
+      "source": "backend/internal/service/basispoints/image_relay.go",
+      "destination": "bridge/internal/basispoints/image_relay.go",
+      "sha256": "c7d088ea9cc27178d1de04a2b0af2d13a53c3e8b7ba3da330d01b67d69104238"
+    },
+    {
+      "source": "backend/internal/service/basispoints/images_test.go",
+      "destination": "bridge/internal/basispoints/images_test.go",
+      "sha256": "1711d83a9f303f922fed7a47ee03a5d92631109528656b7d8d3381e431dceee8"
+    },
+    {
+      "source": "backend/internal/service/basispoints/images.go",
+      "destination": "bridge/internal/basispoints/images.go",
+      "sha256": "37e1ee5e095a32337c46388fadbf5866a77df5c65730a0ba299fee08ea4e9e74"
+    },
+    {
+      "source": "backend/internal/service/basispoints/invocation_recovery_test.go",
+      "destination": "bridge/internal/basispoints/invocation_recovery_test.go",
+      "sha256": "454a045a18f6aa020a9aec22a574d25d508da17e4b9cc12cf0bc2c02235143b1"
+    },
+    {
+      "source": "backend/internal/service/basispoints/NOTICE.md",
+      "destination": "bridge/internal/basispoints/NOTICE.md",
+      "sha256": "60f79b30ca1b194e8447548a24dc3b2f7436ced5022b37e9edf62f00f6235861"
+    },
+    {
+      "source": "backend/internal/service/basispoints/persistent_state.go",
+      "destination": "bridge/internal/basispoints/persistent_state.go",
+      "sha256": "671816322d39422582ef8a7d1852828a07c91afd8e11641d033fa9c214877dff"
+    },
+    {
+      "source": "backend/internal/service/basispoints/plan_test.go",
+      "destination": "bridge/internal/basispoints/plan_test.go",
+      "sha256": "5923de25f9f42a72d2270b6ceecc37e8249153b94055047769381815d6efb0cd"
+    },
+    {
+      "source": "backend/internal/service/basispoints/plan.go",
+      "destination": "bridge/internal/basispoints/plan.go",
+      "sha256": "90d133bc793a19959f9ef71c21478798f5d2f520892a07533b9d05a386ae03c2"
+    },
+    {
+      "source": "backend/internal/service/basispoints/progress_timeout_test.go",
+      "destination": "bridge/internal/basispoints/progress_timeout_test.go",
+      "sha256": "8af83d85dbcc48b34bf3aecca26cdaee4277dca545afe476ebe80689eeb5f493"
+    },
+    {
+      "source": "backend/internal/service/basispoints/progress_timeout.go",
+      "destination": "bridge/internal/basispoints/progress_timeout.go",
+      "sha256": "70b5df85a7d07a924adb19901110f343d3ce9d8edea2ac28ede1e959abd5595a"
+    },
+    {
+      "source": "backend/internal/service/basispoints/protocol_completion_test.go",
+      "destination": "bridge/internal/basispoints/protocol_completion_test.go",
+      "sha256": "385b3ffb544af95b379533ccb259d28e3820aac5d2ae31dd7350cc50c43ddb2a"
+    },
+    {
+      "source": "backend/internal/service/basispoints/raw_custom_call_test.go",
+      "destination": "bridge/internal/basispoints/raw_custom_call_test.go",
+      "sha256": "85d765c7428ee7b3327586fed4d4dc7d3cd2d587718f529fd44b12453e1ed934"
+    },
+    {
+      "source": "backend/internal/service/basispoints/README.md",
+      "destination": "bridge/internal/basispoints/README.md",
+      "sha256": "1fc2e52a1c250fa2d259599c9e64d9fd8dae0ee15f16289d0f90e90836db3edf"
+    },
+    {
+      "source": "backend/internal/service/basispoints/replay_cache_test.go",
+      "destination": "bridge/internal/basispoints/replay_cache_test.go",
+      "sha256": "788686a7aaafa537fc752aeae01d3622bb45c839d657281526fcea8118a31af3"
+    },
+    {
+      "source": "backend/internal/service/basispoints/request_compatibility_test.go",
+      "destination": "bridge/internal/basispoints/request_compatibility_test.go",
+      "sha256": "510318c241119783ca76861143a9ace97216fc4d27deafa969323dbae10628ea"
+    },
+    {
+      "source": "backend/internal/service/basispoints/request.go",
+      "destination": "bridge/internal/basispoints/request.go",
+      "sha256": "727a3e7b4b81bb608dbe0b5537cc215c25f3780be60a1bc2c546723e6d299f8e"
+    },
+    {
+      "source": "backend/internal/service/basispoints/route_test.go",
+      "destination": "bridge/internal/basispoints/route_test.go",
+      "sha256": "616968696905aa0327c8ad902475d3ea9beebc2d40b1ce1bad876f64ac1e2541"
+    },
+    {
+      "source": "backend/internal/service/basispoints/route.go",
+      "destination": "bridge/internal/basispoints/route.go",
+      "sha256": "6ce8407d995ba22d4ef475d74748f1c2523976a84bdee3f937aad67f0430305f"
+    },
+    {
+      "source": "backend/internal/service/basispoints/service_tier_test.go",
+      "destination": "bridge/internal/basispoints/service_tier_test.go",
+      "sha256": "74a7e4762e4bb8de518c2abaf2ac97b0fd4d969064e3c9ebb1fdb4c4c092e52f"
+    },
+    {
+      "source": "backend/internal/service/basispoints/stream_repair_boundary_test.go",
+      "destination": "bridge/internal/basispoints/stream_repair_boundary_test.go",
+      "sha256": "52c6d96e40670ad1e3583fb0164ded7630303ae6ec4223413595cf406e851029"
+    },
+    {
+      "source": "backend/internal/service/basispoints/stream.go",
+      "destination": "bridge/internal/basispoints/stream.go",
+      "sha256": "c57f8cbb31bb7fe78ed4260fb94a6b8d4e9a00aadcfe8a41fe69bd97eeb20241"
+    },
+    {
+      "source": "backend/internal/service/basispoints/structured_output_test.go",
+      "destination": "bridge/internal/basispoints/structured_output_test.go",
+      "sha256": "51217ff7fe6873044ecf9426b172e06d3d064e4c18a6e448d2c5e7611b4407ee"
+    },
+    {
+      "source": "backend/internal/service/basispoints/structured_output.go",
+      "destination": "bridge/internal/basispoints/structured_output.go",
+      "sha256": "0d28fca407c58e1488a6de08e82bbe6a84796ab7aa64f40a19024a57409773a8"
+    },
+    {
+      "source": "backend/internal/service/basispoints/terminal_tools_test.go",
+      "destination": "bridge/internal/basispoints/terminal_tools_test.go",
+      "sha256": "8f6cd3119be1a0e851136b51d0576fc5661211eb95c8884318710217abe76c77"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_arguments_diagnostic_test.go",
+      "destination": "bridge/internal/basispoints/tool_arguments_diagnostic_test.go",
+      "sha256": "352a0bf22621d2f70607a464d629173dc287934fba0967979fecb5956f2bdf40"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_arguments_diagnostic.go",
+      "destination": "bridge/internal/basispoints/tool_arguments_diagnostic.go",
+      "sha256": "5b5c8cb0a82ed3db17e9454ae7fcf6d93d5b889355979b170ed609d54c4f3d5c"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_choice_test.go",
+      "destination": "bridge/internal/basispoints/tool_choice_test.go",
+      "sha256": "3c3944eb0041710a511714b862d897ff3e5d1f485159e3984ba5d65544899570"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_choice.go",
+      "destination": "bridge/internal/basispoints/tool_choice.go",
+      "sha256": "70f9d2dc29dae37f19bf07d532ec21086c3799f3995b658e2e8ccd8f8757e616"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_duplicates_test.go",
+      "destination": "bridge/internal/basispoints/tool_duplicates_test.go",
+      "sha256": "4d351cd39c7b2c35eec064dbba05624f8542e5b5df79fa3fbcda7c5f88235dd2"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_examples_test.go",
+      "destination": "bridge/internal/basispoints/tool_examples_test.go",
+      "sha256": "bab559153e3b86f4b15c77a91f38a34e476c312829036139632182e72bf7319b"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_examples.go",
+      "destination": "bridge/internal/basispoints/tool_examples.go",
+      "sha256": "590cd07ba81b1b9dabe97687d72174d47f2f12cb73511dcb54380644ea1f4fba"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_images_test.go",
+      "destination": "bridge/internal/basispoints/tool_images_test.go",
+      "sha256": "a9f1d520c1900559cfe2a62d3990af8d12b8132548e19ccf823596623e201958"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_images.go",
+      "destination": "bridge/internal/basispoints/tool_images.go",
+      "sha256": "976276be49872730a7d66c088bab1c4843dc78ede89631c0181bf524764f3367"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_repair_test.go",
+      "destination": "bridge/internal/basispoints/tool_repair_test.go",
+      "sha256": "84d874d4a078295adbfa90bcfa6c3d66fdfd85443b1fc5d8dfe23a2028680086"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_repair.go",
+      "destination": "bridge/internal/basispoints/tool_repair.go",
+      "sha256": "2f2562d8b1813961d93468f2d2cb103bd707a7a14fe13885e873ef991c5044d1"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_schema_diagnostics_test.go",
+      "destination": "bridge/internal/basispoints/tool_schema_diagnostics_test.go",
+      "sha256": "2f3c2f5db11c72e2e50eedf2c898afbc919875ffb9a81c8a5088b43d4dfff74d"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_schema_diagnostics.go",
+      "destination": "bridge/internal/basispoints/tool_schema_diagnostics.go",
+      "sha256": "7afac69231c6c1c983d66b45f4d607d60940df4d7fa1bcbb00aa8c39f5da1f39"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tool_schema.go",
+      "destination": "bridge/internal/basispoints/tool_schema.go",
+      "sha256": "361f71a27273b91206f36fbfdcc2b22136500c92b2dab1c3434bd2061d3a41d8"
+    },
+    {
+      "source": "backend/internal/service/basispoints/tools.go",
+      "destination": "bridge/internal/basispoints/tools.go",
+      "sha256": "fc0edf1e7d1a37ab89ddb4768134f79b45826ceb0020dab7d04c214f87dd679c"
+    },
+    {
+      "source": "backend/internal/service/basispoints/unknown_tool_continuation_test.go",
+      "destination": "bridge/internal/basispoints/unknown_tool_continuation_test.go",
+      "sha256": "4a0784a61ad5c6743041eafb0e70c07e0a5e448bbb4b902a27f5190ed7e72ebf"
+    },
+    {
+      "source": "backend/internal/service/basispoints/unknown_tool_repair.go",
+      "destination": "bridge/internal/basispoints/unknown_tool_repair.go",
+      "sha256": "49b1cad55983c17dae18bb2da31a442990d3ab9919046155033b0b92ea84f264"
+    },
+    {
+      "source": "backend/internal/service/basispoints/upstream_failure_test.go",
+      "destination": "bridge/internal/basispoints/upstream_failure_test.go",
+      "sha256": "f7958c63ba987df1e2661ceb3994279e78d976e45f6f90350c9109a34e4ebca1"
+    },
+    {
+      "source": "backend/internal/service/basispoints/upstream_failure.go",
+      "destination": "bridge/internal/basispoints/upstream_failure.go",
+      "sha256": "251a775a21d69e7e4574a2dbfd80fd0575f1c9a513602ad9713adccd92e602a8"
+    },
+    {
+      "source": "backend/internal/service/basispoints/web_search_events.go",
+      "destination": "bridge/internal/basispoints/web_search_events.go",
+      "sha256": "b22f31b24a70bcd4c5fe49b07ca8d61c44b72bd6e24f5394599eeb1a0af933b1"
+    },
+    {
+      "source": "backend/internal/service/basispoints/web_search_stream.go",
+      "destination": "bridge/internal/basispoints/web_search_stream.go",
+      "sha256": "4928c008face408441fdd8f60ba14272b67ff84e80fa235e9227d5e7d03077ef"
+    },
+    {
+      "source": "backend/internal/service/basispoints/web_search_test.go",
+      "destination": "bridge/internal/basispoints/web_search_test.go",
+      "sha256": "c3c65d072fa3d3a43c98c019bc17c8bb5c009a5e83cf794304ced0ac8f350359"
+    },
+    {
+      "source": "backend/internal/service/basispoints/web_search.go",
+      "destination": "bridge/internal/basispoints/web_search.go",
+      "sha256": "2be41568acf4191697b2eb0b072144bff1cdf85280cd93ba09a0af9997967fc5"
+    },
+    {
+      "source": "backend/internal/service/basispoints/WEB_SEARCH.md",
+      "destination": "bridge/internal/basispoints/WEB_SEARCH.md",
+      "sha256": "858b9786f30d9886821adf5b07c762cf8214baa7d434e225a9e2bd23540ada4c"
+    },
+    {
+      "source": "backend/internal/util/urlvalidator/origin_test.go",
+      "destination": "bridge/internal/urlvalidator/origin_test.go",
+      "sha256": "f35be0189fbdbc650ed5b980135b86b939c066d63b8dca3861fdb59c4f8ecb61"
+    },
+    {
+      "source": "backend/internal/util/urlvalidator/origin.go",
+      "destination": "bridge/internal/urlvalidator/origin.go",
+      "sha256": "a385a17b3cd75c98cde613bbbdfa8c6dd6466ab4db23949948e58ff1c05ca17d"
+    },
+    {
+      "source": "backend/internal/util/urlvalidator/validator_test.go",
+      "destination": "bridge/internal/urlvalidator/validator_test.go",
+      "sha256": "9efd35b30f80f1497e4a6b250b14506980b60b253733cf959d8fc012d778e2ca"
+    },
+    {
+      "source": "backend/internal/util/urlvalidator/validator.go",
+      "destination": "bridge/internal/urlvalidator/validator.go",
+      "sha256": "78ced6c8047a162e71698317b101e35cedb330c967dab3c7b4646a192d664fa3"
+    },
+    {
+      "source": "backend/internal/util/urlvalidator/testdata/https-origin-contract.json",
+      "destination": "bridge/internal/urlvalidator/testdata/https-origin-contract.json",
+      "sha256": "d02493c4d365fdf924ea8bd4134c3cf1a5c8c8e83dbde487a917403f23bf9c81"
+    }
+  ],
+  "reference_contracts": [
+    {
+      "source": "backend/internal/pkg/openai/oauth.go",
+      "sha256": "2f8d6be962cb1bb808fc672a448975582227f3cd2c2930abf9efba4c313dbd17"
+    },
+    {
+      "source": "backend/internal/service/openai_excel_oauth.go",
+      "sha256": "e430a9250981ec9d547c6e3672053d4711e4a0b70fde412bd2f1b0aeec9fe055"
+    },
+    {
+      "source": "backend/internal/service/openai_excel_bps.go",
+      "sha256": "1b2fe0fd83cdaab2fc044e7f9fbac70c440bb512e7a4e2de9c1bb28de2bdd524"
+    },
+    {
+      "source": "backend/internal/service/openai_quota_service.go",
+      "sha256": "212e4633d59c9b7b1d25b7c9a978feab1895f1b541254250490c95f4bc15d71e"
+    },
+    {
+      "source": "backend/internal/service/openai_quota_reset_credits.go",
+      "sha256": "323aa8a4876f3fd594bce02d4bd9ee5c18d13f83dfe0036d472ce6030753e86f"
+    },
+    {
+      "source": "LICENSE",
+      "sha256": "f831e7eed577481687a9bc0b48024e5e40b6f655fcde073ede964b50be5d55d9"
+    }
+  ],
+  "repository_id": 1135073661,
+  "owner": "ranxi2001"
+}

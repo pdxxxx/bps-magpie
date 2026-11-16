@@ -1,0 +1,12 @@
+.reference/
+.sandbox/
+node_modules/
+bin/
+*.tgz
+*.log
+.env
+.env.*
+!.env.example
+coverage/
+dist/
+plugin-work/
