@@ -1,6 +1,6 @@
 # BPS for Magpie
 
-当前版本：0.4.4。自动同步模型及思考强度，默认处理兼容性，并提供工具格式纠错和推理流保护。
+当前版本：0.4.5。修正工具封装与上游 schema 的冲突，减少不必要的工具调用推理，保留格式纠错和推理流保护。
 
 独立 Magpie / OpenCode provider：Excel/BPS OAuth 授权、令牌刷新、Responses
 推理、流式文本与工具往返，以及 ChatGPT/Codex 额度查询和手动重置。
@@ -10,7 +10,7 @@
 ## 安装
 
 在 [GitHub Releases](https://github.com/pdxxxx/bps-magpie/releases) 下载
-`bps-magpie-0.4.4-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
+`bps-magpie-0.4.5-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
 Add a plugin 中填写解压后的 `bps-magpie` 目录。Windows x64 发布包已包含转换程序，
 不需要安装 Node.js 或 Go。也可执行（将路径替换为实际解压目录）：
 

@@ -1,6 +1,20 @@
 # BPS integration audit
 
-Version 0.4.4.
+Version 0.4.5.
+
+## Native tool schema and invocation hints
+
+The strict upstream run_officejs schema requires a nonempty references array.
+The adapter previously instructed references=[] and generated empty examples.
+Captured requests stalled while producing whitespace at that field. Instructions,
+examples, raw-code/raw-command wrappers and reconstructed history now use the
+client tool name as a reference label. Client execution arguments are unchanged.
+
+Automatic tool use no longer ends with an unconditional instruction to invoke
+a tool. Required/selected-tool rules and complete terminal validation remain.
+Optional per-request metrics record numeric phases and counts without payloads
+or identity. Parallel batching experiments are not included in this release.
+See VALIDATION.md for the bounded real-account comparisons and current checks.
 
 ## Tool transport correction
 
@@ -82,7 +96,8 @@ sanitization, compaction, opaque-state preservation and image reprepare.
 
 ## Verification boundary
 
-Node: 118 pass and one Bun-only skip. Bundled Bun 1.4.2: 119 pass.
+Version 0.4.5: Node 124 pass and one Bun-only skip; bundled Bun 1.4.2
+125 pass across the 14 root test files.
 Go tests, vet, build and native sandbox host loading pass.
 Real signed-in text and tool-result requests complete. The reported local
 conversation completed in about 65 seconds after reload, through three BPS

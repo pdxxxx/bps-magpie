@@ -80,6 +80,11 @@ func TestToolExamplesUseCallableCatalog(t *testing.T) {
 				if ns := text(call["namespace"]); ns != "" {
 					name = ns + "." + name
 				}
+				// Native strict schema requires references: array<string>, minItems=1.
+				refs, ok := outer["references"].([]any)
+				if !ok || len(refs) != 1 || refs[0] != name {
+					t.Fatal("example must name its client tool in nonempty native references")
+				}
 				info, ok := bridge.tools[name]
 				if !ok {
 					t.Fatalf("example references absent tool %s", name)

@@ -1,14 +1,14 @@
-# BPS 0.4.4 validation
+# BPS 0.4.5 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.4.4 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.4.5 / protocol 3, legacy 2 accepted |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 118 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 119 pass |
+| Node integration tests | 124 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.2 | 125 pass across the 14 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Eight management/diagnostic tools | Registered |
 
@@ -18,7 +18,30 @@ tool histories, attachments, compaction, continuation cache, quota and manual
 reset receipts. Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
 
-## Real account and local host
+## Version 0.4.5 checks
+
+- The live strict native tool schema requires references to contain at least
+  one string. Empty references instructions conflicted with that contract;
+  captured failed requests kept generating whitespace in that field without
+  a completed native response. Prompts, examples and reconstructed history now
+  name the client tool in references.
+- In an isolated same-model xhigh comparison, the empty-reference candidate
+  completed 8/12 selected-tool requests within 30 seconds; the corrected
+  candidate completed 12/12. These are bounded synthetic probes, not a general
+  failure-rate or latency guarantee.
+- Conditional automatic-tool instructions completed 20/20 direct-answer probes
+  with a 64-tool catalog, as did the baseline. Median latency was 3.25 versus
+  6.92 seconds. Required and explicitly selected tools remain validated.
+- Optional request metrics export only timings/counts and fixed outcomes.
+  Tests cover cancellation, callback failure, correction usage, upload timing
+  and scope queue timing. No production logging or new user setting is enabled.
+- The installed local Magpie reports plugin and bridge 0.4.5, protocol 3.
+  A real xhigh tool-generation request and simulated-result continuation both
+  completed through its gateway in approximately 4.3 and 5.3 seconds. The
+  returned tool was not executed.
+- Experimental parallel batching is excluded from this release.
+
+## Earlier real account and local host checks (0.4.4)
 
 - One malformed raw-command fixture was corrected through the real authenticated
   BPS endpoint, preserving its operation. No returned command was executed.

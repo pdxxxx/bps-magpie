@@ -32,7 +32,7 @@ func (b *Bridge) toolExamples() string {
 		default:
 			continue
 		}
-		outer := object{"summary": "Call client tool " + name, "extended_summary": "Relay one declared client tool", "destructive": false, "references": []any{}}
+		outer := object{"summary": "Call client tool " + name, "extended_summary": "Relay one declared client tool", "destructive": false, "references": []any{name}}
 		if info.Kind == "custom" {
 			// We do not implement arbitrary client grammars. Avoid teaching a payload
 			// when its declared grammar has not been checked by the bridge.

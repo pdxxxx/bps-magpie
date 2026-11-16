@@ -7,7 +7,7 @@ import {progressReader} from "./progress.mjs";
 
 export const binaryPath=fileURLToPath(new URL(`../bin/bps-bridge-${process.platform}-${process.arch}${process.platform==="win32"?".exe":""}`,import.meta.url));
 
-export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs}={}) {
+export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs,metrics}={}) {
   signal?.throwIfAborted();
   if(!existsSync(binary)) throw new Error("BPS bridge is not built for this platform. Run npm run build in the plugin directory (Go 1.27.4+ required).");
   if(Buffer.byteLength(raw)>MAX_BODY) throw Object.assign(new Error("BPS request exceeds 64 MiB"),{status:413});
@@ -53,11 +53,14 @@ export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryP
       stream(upstream){
         if(!upstream) {dispose();throw new Error("BPS returned an empty stream");}
         let pumpError,pump,repairs=0,repairActive=false;
+        const clientObserver=metrics?.observer('client');
         function startPump(source){
           const reader=progressReader(source,{idleMs:streamIdleMs});upstreamReader=reader;
+          const upstreamObserver=metrics?.observer('upstream');
           pump=(async()=>{
             try{
               for(;;){const part=await reader.read();if(part.done)break;
+                upstreamObserver?.push(part.value);
                 for(let off=0;off<part.value.byteLength;off+=64*1024){await send(JSON.stringify({data:Buffer.from(part.value.subarray(off,off+64*1024)).toString("base64")})+"\n");}
               }
               await send('{"end":true}\n');
@@ -81,10 +84,12 @@ export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryP
                 if(part.kind==="data"){
                   if(typeof part.data!=="string")throw new Error("Invalid BPS stream frame");
                   const value=Buffer.from(part.data,"base64");if(value.length>64*1024)throw new Error("BPS stream frame exceeds limit");
+                  clientObserver?.push(value);
                   controller.enqueue(new Uint8Array(value));return;
                 }
                 if(part.kind==="repair"){
                   if(repairActive||++repairs>2||typeof part.body!=="string")throw new Error("Invalid BPS correction request");
+                  metrics?.count('repair_count');metrics?.start('repair_ms');
                   repairActive=true;await stopPump();if(pumpError)throw pumpError;
                   try{
                     const body=Buffer.from(part.body,"base64");
@@ -102,7 +107,7 @@ export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryP
                 }
                 if(part.kind==="repair_done"){
                   if(!repairActive)throw new Error("Unexpected BPS correction completion");
-                  await stopPump();if(pumpError)throw pumpError;repairActive=false;continue;
+                  await stopPump();if(pumpError)throw pumpError;repairActive=false;metrics?.end('repair_ms');continue;
                 }
                 throw new Error("Invalid BPS stream control frame");
               }

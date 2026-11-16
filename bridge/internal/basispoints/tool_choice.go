@@ -113,3 +113,10 @@ func (b *Bridge) toolChoiceInstructions() string {
 	}
 	return ""
 }
+
+func (b *Bridge) toolInvocationInstructions() string {
+	if b.toolChoice == "required" || b.selectedTool != nil {
+		return "Invoke native run_officejs for the required client tool call in this response."
+	}
+	return "Invoke native run_officejs only when a client tool is necessary for the user request; otherwise answer directly without any tool call."
+}
