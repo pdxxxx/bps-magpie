@@ -1,4 +1,5 @@
 import { beginLogin, createCredentialManager } from "./src/auth.mjs";
+import { startProbePage } from "./src/relay-probe.mjs";
 import { makeFetch } from "./src/provider.mjs";
 import { fetchModelCatalog } from "./src/models.mjs";
 import { PROVIDER, BASE_URL, REFRESH_LEAD } from "./src/constants.mjs";
@@ -8,9 +9,10 @@ import {createConversationStore} from "./src/state.mjs";
 import {createAttachmentStore} from "./src/attachments.mjs";
 
 // Export only the plugin; Magpie treats every exported function as a plugin.
-export const BPSPlugin=async ({client},options={})=>{
+export const BPSPlugin=async ({client,magpie},options={})=>{
   if(options.continuationCache!==undefined&&typeof options.continuationCache!=="boolean")throw new Error("continuationCache must be a boolean");
   const network={fetchImpl:createFetch(options),state:createConversationStore({enabled:options.continuationCache!==false}),attachments:createAttachmentStore()};
+  if(magpie && globalThis.Bun && options.relayEnabled===true)startProbePage(options);
   const credentials=createCredentialManager(client,network);
   return {
     config:async cfg=>{

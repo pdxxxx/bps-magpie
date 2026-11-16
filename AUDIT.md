@@ -1,6 +1,6 @@
 # BPS integration audit
 
-Version 0.4.7.
+Version 0.4.8.
 
 ## Optional WSS transport
 

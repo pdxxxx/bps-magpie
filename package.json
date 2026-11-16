@@ -1,6 +1,6 @@
 {
   "name": "opencode-bps-auth",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Magpie provider for independent Excel/BPS OAuth and Responses inference",
   "type": "module",
   "main": "./index.mjs",
@@ -61,6 +61,7 @@
         "zh": "BPS 设置"
       },
       "file": "ui/index.html",
+      "service": { "port": 39846 },
       "icon": "ui/icon.svg"
     },
     "summary": {

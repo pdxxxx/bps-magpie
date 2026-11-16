@@ -4,10 +4,13 @@ const failure=code=>Object.assign(new Error('BPS relay '+code+'; no automatic re
 export function relayOptions(options={}){
   if(options.relayEnabled!==undefined&&typeof options.relayEnabled!=='boolean')throw new Error('relayEnabled must be a boolean');
   if(options.relayEnabled!==true)return null;
-  let url;try{url=new URL(options.relayUrl);}catch{throw new Error('Enter a valid WSS relay URL');}
+  const raw=typeof options.relayUrl==='string'?options.relayUrl.trim():'';
+  const token=typeof options.relayToken==='string'?options.relayToken.trim():'';
+  if(/[\s\p{Cc}\p{Cf}\\?#]/u.test(raw))throw new Error('Invalid characters in WSS relay URL');
+  let url;try{url=new URL(raw);}catch{throw new Error('Enter a valid WSS relay URL');}
   if(url.protocol!=='wss:'||!url.hostname||url.username||url.password||url.search||url.hash||url.pathname!=='/relay')throw new Error('Relay URL must be wss://host/relay without userinfo or query');
-  if(typeof options.relayToken!=='string'||!/^[A-Za-z0-9_-]{32,256}$/.test(options.relayToken))throw new Error('Enter a valid relay access token');
-  return {url:url.href,token:options.relayToken};
+  if(!/^[A-Za-z0-9_-]{32,256}$/.test(token))throw new Error('Enter a valid relay access token');
+  return {url:url.href,token};
 }
 
 // One WSS connection multiplexes bounded HTTP requests. Connection loss fails
