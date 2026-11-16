@@ -1,6 +1,17 @@
 # BPS integration audit
 
-Version 0.4.6.
+Version 0.4.7.
+
+## Optional WSS transport
+
+The relay is opt-in with a manually entered URL and access token. No deployment
+address is compiled into the plugin. Disabled settings preserve the existing
+fetch path; enabled settings use a direct WSS connection to the trusted relay.
+The relay code is maintained in a separate repository. It does not manage user
+accounts, rewrite requests, replay interrupted inference or expose MCP tools.
+The client waits for a validated protocol handshake, multiplexes IDs and uses
+credit-based streaming. Disconnects fail active requests; reconnect is only for
+later callers. Existing local provider limits remain independent of relay limits.
 
 ## Provider-only and bounded performance changes
 
@@ -115,8 +126,8 @@ sanitization, compaction, opaque-state preservation and image reprepare.
 
 ## Verification boundary
 
-Version 0.4.6: Node 125 pass and one Bun-only skip; bundled Bun 1.4.2
-126 pass across the 18 root test files.
+Version 0.4.7: Node 130 pass and one Bun-only skip; bundled Bun 1.4.2
+131 pass across the 19 root test files.
 Go tests, vet, build and native sandbox host loading pass.
 Earlier real signed-in text and tool-result requests completed. The reported local
 conversation completed in about 65 seconds after reload, through three BPS

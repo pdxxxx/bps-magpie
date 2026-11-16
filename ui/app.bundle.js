@@ -4,7 +4,7 @@
 function fieldsFromOptions(options={}){
  const proxy=options.proxy;
  const timeout=Number.isFinite(options.timeoutMs)?options.timeoutMs:1800000;
- return {mode:proxy==="direct"?"direct":typeof proxy==="string"&&proxy&&proxy!=="inherit"?"proxy":"inherit",proxy:typeof proxy==="string"&&!['direct','inherit'].includes(proxy)?proxy:"",seconds:String(timeout/1000),cache:options.continuationCache!==false};
+ return {mode:proxy==="direct"?"direct":typeof proxy==="string"&&proxy&&proxy!=="inherit"?"proxy":"inherit",proxy:typeof proxy==="string"&&!['direct','inherit'].includes(proxy)?proxy:"",seconds:String(timeout/1000),cache:options.continuationCache!==false,relayEnabled:options.relayEnabled===true,relayUrl:typeof options.relayUrl==='string'?options.relayUrl:'',relayToken:typeof options.relayToken==='string'?options.relayToken:''};
 }
 function optionsFromFields(fields,base={}){
  const seconds=Number(fields.seconds);
@@ -18,8 +18,16 @@ function optionsFromFields(fields,base={}){
    proxy=parsed.href;
  }else throw new Error("无效的代理模式。");
  if(typeof fields.cache!=="boolean")throw new Error("请选择是否启用会话缓存。");
+ const relayEnabled=fields.relayEnabled===true;
+ let relayUrl=String(fields.relayUrl||'').trim(),relayToken=String(fields.relayToken||'').trim();
+ if(relayEnabled){
+   let url;try{url=new URL(relayUrl);}catch{throw new Error('请输入有效的 WSS 中继地址。');}
+   if(url.protocol!=='wss:'||!url.hostname||url.pathname!=='/relay'||url.username||url.password||url.hash||url.search)throw new Error('中继地址须为 wss://域名/relay，不含用户名或查询参数。');
+   if(!/^[A-Za-z0-9_-]{32,256}$/.test(relayToken))throw new Error('请输入有效的中继访问密钥。');
+   relayUrl=url.href;
+ }
  const {models:_obsolete,...preserved}=base;
- return {...preserved,timeoutMs:seconds*1000,proxy,continuationCache:fields.cache};
+ return {...preserved,timeoutMs:seconds*1000,proxy,continuationCache:fields.cache,relayEnabled,relayUrl,relayToken};
 }
 
 
@@ -30,12 +38,14 @@ function networkNote(){
  element("network-note").textContent=mode==="inherit"?"使用 Magpie 各入口的代理设置。":mode==="direct"?"API 请求直接连接。":"用于授权换票、推理与额度请求。";
 }
 function announce(message,error=false){element("status").textContent=message;element("status").dataset.error=String(error);}
-async function load(){saved=await magpie.options.get()||{};const fields=fieldsFromOptions(saved);for(const [key,value]of Object.entries(fields)){if(key==="cache")element(key).checked=value;else element(key).value=value;}networkNote();announce("设置已读取。");}
+function relayNote(){element('relay-fields').hidden=!element('relayEnabled').checked;}
+async function load(){saved=await magpie.options.get()||{};const fields=fieldsFromOptions(saved);for(const [key,value]of Object.entries(fields)){if(key==="cache"||key==='relayEnabled')element(key).checked=value;else element(key).value=value;}networkNote();relayNote();announce("设置已读取。");}
 element("mode").addEventListener("change",networkNote);
+element('relayEnabled').addEventListener('change',relayNote);
 element("reload").addEventListener("click",()=>load().catch(e=>announce(e.message,true)));
 element("settings").addEventListener("submit",async e=>{
  e.preventDefault();try{
-  const fields={...Object.fromEntries(["mode","proxy","seconds"].map(key=>[key,element(key).value])),cache:element("cache").checked};const next=optionsFromFields(fields,saved);
+  const fields={...Object.fromEntries(["mode","proxy","seconds","relayUrl","relayToken"].map(key=>[key,element(key).value])),cache:element("cache").checked,relayEnabled:element('relayEnabled').checked};const next=optionsFromFields(fields,saved);
   element("controls").disabled=true;await magpie.options.set(next);saved=next;announce("已保存。请在插件列表关闭后重新启用插件，使新配置生效。");
  }catch(error){announce(error.message||"保存失败。",true);}finally{element("controls").disabled=false;}
 });

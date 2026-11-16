@@ -1,5 +1,6 @@
 // Leave proxy unspecified to preserve Magpie's account/provider/global scope.
 // An explicit override applies to every provider endpoint.
+import {createRelayFetch,relayOptions} from './relay.mjs';
 export function proxyOption(options={}) {
   const value=options.proxy;
   if(value===undefined || value===null || value==="" || value==="inherit")return undefined;
@@ -14,7 +15,10 @@ export function createFetch(options={}, {fetchImpl, supportsProxy=!!globalThis.B
   const current=typeof options==="function"?options:()=>options;
   // Validate at load, before authentication or any request can have effects.
   proxyOption(current());
+  const relayConfig=relayOptions(current());
+  const relay=relayConfig?createRelayFetch(relayConfig):null;
   return async (input,init={})=>{
+    if(relay)return relay(input,init);
     const proxy=proxyOption(current());
     if(proxy!==undefined && !supportsProxy && !fetchImpl)throw new Error("Explicit plugin proxy requires Bun (Magpie runtime); Node tests use an injected transport");
     const request=proxy===undefined?init:{...init,proxy};

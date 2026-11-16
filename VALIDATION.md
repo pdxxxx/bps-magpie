@@ -1,14 +1,14 @@
-# BPS 0.4.6 validation
+# BPS 0.4.7 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.4.6 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.4.7 / protocol 3, legacy 2 accepted |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 125 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 126 pass across the 18 root test files |
+| Node integration tests | 130 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.2 | 131 pass across the 19 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Native host agent tools | Zero; provider-only |
 
@@ -18,7 +18,34 @@ tool histories, attachments, compaction, continuation cache and read-only quota.
 Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
 
-## Version 0.4.6 experiments and limits
+## Version 0.4.7 optional relay
+
+- Off by default. No server address or relay token is packaged; users must enter
+  both and enable the option. Disabled settings make no relay connection.
+- The separate WSS relay preserves request body bytes, per-request identity,
+  upstream HTTP status and streamed response data. Active requests fail on
+  disconnect; later calls can reconnect without replaying submitted requests.
+- Client tests cover configuration, channel reuse, multiple IDs, cancellation,
+  disconnect/backoff, errors without direct fallback and flow-control credits.
+- Real Bun-to-Go integration sent a 65 MiB request and received a 130 MiB
+  response over one channel, then cancelled one request and reused that channel.
+  This verifies relay transport capacity, not the existing provider 64 MiB cap.
+- Remote TLS/WSS connection and unsigned BPS access probes passed. Three requests
+  used one WSS connection; first request was about 1.91 seconds, follow-ups about
+  0.29 seconds. The expected unsigned status was 401 and was preserved.
+- Two simultaneous remote clients using the same fresh saved account independently
+  fetched an allowed seven-model catalog. Different-account isolation was tested
+  synthetically. No new real inference was sent after the previously observed
+  upstream usage-policy refusal. A successful model list is not inference proof.
+- Service has no request/client/account count limit, aggregate body-size limit,
+  or inference-duration timeout. Local Magpie concurrency remains four. Frame,
+  header, in-flight credit, handshake and disconnected-peer bounds still apply.
+- WSS connects directly to the manually entered relay; it does not inherit the
+  provider/global HTTP proxy. Host-level VPN/TUN can still affect routing.
+- Go relay unit tests and vet pass. The race detector could not run on this
+  Windows machine because the C compiler is unavailable; no race-pass claim.
+
+## Earlier version 0.4.6 experiments and limits
 
 - Selected-tool catalog presentation: 20 paired function requests per version
   and three paired raw-code requests. All 46 requests completed with correct

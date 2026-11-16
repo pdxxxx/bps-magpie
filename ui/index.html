@@ -8,6 +8,13 @@
 <select id="mode"><option value="inherit">跟随 Magpie</option><option value="proxy">指定代理</option><option value="direct">直连</option></select>
 <div id="proxy-row" hidden><label for="proxy">HTTP(S) 代理地址</label><input id="proxy" type="password" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:7891"></div>
 <p id="network-note" class="note"></p>
+<details><summary>WSS 中继（可选）</summary><div class="advanced">
+<label class="toggle" for="relayEnabled"><input id="relayEnabled" type="checkbox">手动启用 WSS 中继</label>
+<div id="relay-fields" hidden>
+<label for="relayUrl">中继地址</label><input id="relayUrl" type="url" autocomplete="off" spellcheck="false" placeholder="wss://你的域名/relay">
+<label for="relayToken">访问密钥</label><input id="relayToken" type="password" autocomplete="off" spellcheck="false">
+<p class="note">仅连接你信任的中继。启用后，请求和账号授权经加密通道交给中继转发；本机直连中继，不使用上方或 Magpie 的 HTTP 代理。关闭后恢复原网络路径。</p>
+</div></div></details>
 <details><summary>高级选项</summary><div class="advanced">
 <label for="seconds">请求超时（秒）</label><input id="seconds" type="number" min="1" max="3600" step="1" required>
 <label class="toggle" for="cache"><input id="cache" type="checkbox">缓存会话上下文</label>
