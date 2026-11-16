@@ -67,7 +67,12 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
       const requestOptions={method:"POST",redirect:"error",signal};
       await state.serial(cacheScope,signal,async()=>{
       const saved=state.snapshot(cacheScope,source.previous_response_id,{explicitTools:Object.hasOwn(source,"tools")});
-      bridge=await startBridge(raw,scope,{signal,binary:deps.binary,streamIdleMs:deps.streamIdleMs,compact,keepContext:!!cacheScope&&state.enabled,...saved,async upload(body,contentType){
+      bridge=await startBridge(raw,scope,{signal,binary:deps.binary,streamIdleMs:deps.streamIdleMs,compact,keepContext:!!cacheScope&&state.enabled,...saved,async repair(body){
+        const response=await fetchImpl(BASE_URL+"/responses",{...requestOptions,headers:bpsHeaders(auth),body});
+        if(!response.ok){if(response.status===401&&cacheScope)state.forgetOwner(cacheScope.owner);await response.body?.cancel();throw new Error("BPS tool correction request failed");}
+        if(!response.headers.get("content-type")?.toLowerCase().includes("text/event-stream")){await response.body?.cancel();throw new Error("BPS tool correction returned an invalid stream");}
+        return response.body;
+      },async upload(body,contentType){
         const response=await fetchImpl(BASE_URL+"/attachments",{...requestOptions,headers:bpsHeaders(auth,{contentType,accept:"application/json"}),body});
         if(!response.ok)throw Object.assign(new Error("BPS attachment upload failed"),{upstream:response});
         const data=await readJSON(response,65536,"BPS attachment");

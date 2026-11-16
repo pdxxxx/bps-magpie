@@ -572,7 +572,7 @@ func (b *Bridge) translateCall(native object) (object, error) {
 			if recovered, ok := recoverTransportEnvelope(arguments["code"], b.tools); ok {
 				envelope, err = recovered, nil
 			} else {
-				err = fmt.Errorf("%w; raw CUSTOM input requires summary=codex2api.custom/CATALOG_NAME; raw FUNCTION_CODE requires summary=codex2api.function_code/CATALOG_NAME for an eligible catalog function", err)
+				err = fmt.Errorf("%w; raw CUSTOM input requires summary=codex2api.custom/CATALOG_NAME; raw FUNCTION_CODE requires summary=codex2api.function_code/CATALOG_NAME; raw FUNCTION_CMD requires summary=codex2api.function_cmd/CATALOG_NAME for an eligible catalog function", err)
 			}
 		}
 	}

@@ -7,7 +7,7 @@ import {progressReader} from "./progress.mjs";
 
 export const binaryPath=fileURLToPath(new URL(`../bin/bps-bridge-${process.platform}-${process.arch}${process.platform==="win32"?".exe":""}`,import.meta.url));
 
-export async function startBridge(raw,scope,{signal,upload,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs}={}) {
+export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs}={}) {
   signal?.throwIfAborted();
   if(!existsSync(binary)) throw new Error("BPS bridge is not built for this platform. Run npm run build in the plugin directory (Go 1.27.4+ required).");
   if(Buffer.byteLength(raw)>MAX_BODY) throw Object.assign(new Error("BPS request exceeds 64 MiB"),{status:413});
@@ -27,18 +27,18 @@ export async function startBridge(raw,scope,{signal,upload,binary=binaryPath,com
     if(dead) throw new Error("BPS bridge was cancelled");
     await new Promise((resolve,reject)=>child.stdin.write(bytes,error=>error?reject(error):resolve()));
   }
-  async function line(){
+  async function line(allowEOF=false){
     for(;;){
       const end=pending.indexOf(10);
       if(end>=0){const value=pending.subarray(0,end);pending=pending.subarray(end+1);try{return JSON.parse(value.toString());}catch{throw new Error("Invalid BPS bridge handshake");}}
       const part=await iterator.next();
-      if(part.done) throw new Error("BPS bridge exited before preparing the request");
+      if(part.done){if(allowEOF&&pending.length===0)return null;throw new Error("BPS bridge exited before preparing the request");}
       pending=Buffer.concat([pending,part.value]);
       if(pending.length>96*1024*1024) throw new Error("BPS bridge control frame is too large");
     }
   }
   try{
-    await send(JSON.stringify({raw:Buffer.from(raw).toString("base64"),scope,compact,keepContext,previous:previous?.toString("base64"),terminal:terminal?.toString("base64"),catalog:catalog?.toString("base64")})+"\n");
+    await send(JSON.stringify({protocol:3,raw:Buffer.from(raw).toString("base64"),scope,compact,keepContext,previous:previous?.toString("base64"),terminal:terminal?.toString("base64"),catalog:catalog?.toString("base64")})+"\n");
     let prepared;
     for(;;){
       const event=await line();
@@ -48,30 +48,64 @@ export async function startBridge(raw,scope,{signal,upload,binary=binaryPath,com
       const id=await upload(Buffer.from(event.body,"base64"),event.contentType);
       await send(JSON.stringify({id})+"\n");
     }
-    if(prepared.protocol!==2||typeof prepared.context!=="string")throw new Error("BPS bridge is out of date; rebuild the plugin binary");
+    if(prepared.protocol!==3||typeof prepared.context!=="string")throw new Error("BPS bridge is out of date; rebuild the plugin binary");
     return {body:Buffer.from(prepared.body,"base64"),context:Buffer.from(prepared.context,"base64"),catalog:Buffer.from(prepared.catalog||"","base64"),effort:prepared.effort,warnings:prepared.warnings||[],dispose,
       stream(upstream){
         if(!upstream) {dispose();throw new Error("BPS returned an empty stream");}
-        upstreamReader=progressReader(upstream,{idleMs:streamIdleMs});
-        let pumpError;
-        const pump=(async()=>{
-          try{for(;;){const part=await upstreamReader.read();if(part.done)break;await send(part.value);}child.stdin.end();}
-          catch(error){pumpError=error;child.stdin.destroy();child.kill();}
-        })();
+        let pumpError,pump,repairs=0,repairActive=false;
+        function startPump(source){
+          const reader=progressReader(source,{idleMs:streamIdleMs});upstreamReader=reader;
+          pump=(async()=>{
+            try{
+              for(;;){const part=await reader.read();if(part.done)break;
+                for(let off=0;off<part.value.byteLength;off+=64*1024){await send(JSON.stringify({data:Buffer.from(part.value.subarray(off,off+64*1024)).toString("base64")})+"\n");}
+              }
+              await send('{"end":true}\n');
+            }catch(error){pumpError=error;child.stdin.destroy();child.kill();}
+          })();
+        }
+        async function stopPump(){upstreamReader?.cancel();await pump;}
+        startPump(upstream);
         return new ReadableStream({
           async pull(controller){
             try{
-              signal?.throwIfAborted();
-              if(pending.length){const value=pending;pending=Buffer.alloc(0);controller.enqueue(new Uint8Array(value));return;}
-              const part=await iterator.next();
-              if(!part.done){controller.enqueue(new Uint8Array(part.value));return;}
-              const code=await exit;
-              // A terminal can arrive before the upstream closes its connection.
-              upstreamReader.cancel();
-              await pump;
-              if(pumpError && code!==0) throw pumpError;
-              if(code!==0) throw new Error("BPS stream conversion failed or the upstream stream was incomplete");
-              controller.close();dispose();
+              for(;;){
+                signal?.throwIfAborted();
+                const part=await line(true);
+                if(part===null){
+                  const code=await exit;await stopPump();
+                  if(pumpError&&code!==0)throw pumpError;
+                  if(code!==0)throw new Error("BPS stream conversion failed or the upstream stream was incomplete");
+                  controller.close();dispose();return;
+                }
+                if(part.kind==="data"){
+                  if(typeof part.data!=="string")throw new Error("Invalid BPS stream frame");
+                  const value=Buffer.from(part.data,"base64");if(value.length>64*1024)throw new Error("BPS stream frame exceeds limit");
+                  controller.enqueue(new Uint8Array(value));return;
+                }
+                if(part.kind==="repair"){
+                  if(repairActive||++repairs>2||typeof part.body!=="string")throw new Error("Invalid BPS correction request");
+                  repairActive=true;await stopPump();if(pumpError)throw pumpError;
+                  try{
+                    const body=Buffer.from(part.body,"base64");
+                    if(!repair||body.length>MAX_BODY)throw new Error("BPS correction is unavailable");
+                    const source=await repair(body);signal?.throwIfAborted();
+                    if(!source)throw new Error("BPS correction returned an empty stream");
+                    startPump(source);
+                  }catch(error){
+                    signal?.throwIfAborted();
+                    // Only a fixed message crosses IPC; upstream bodies and headers never do.
+                    await send('{"end":true,"error":"correction request failed"}\n');
+                    pump=Promise.resolve();
+                  }
+                  continue;
+                }
+                if(part.kind==="repair_done"){
+                  if(!repairActive)throw new Error("Unexpected BPS correction completion");
+                  await stopPump();if(pumpError)throw pumpError;repairActive=false;continue;
+                }
+                throw new Error("Invalid BPS stream control frame");
+              }
             }catch(error){controller.error(signal?.aborted?signal.reason:pumpError||error);dispose();}
           },cancel(){dispose();}
         });

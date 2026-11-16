@@ -1,6 +1,43 @@
 # BPS integration audit
 
-Version 0.4.3.
+Version 0.4.4.
+
+## Tool transport correction
+
+The native protocol adapter already had bounded, operation-preserving correction,
+but the plugin called Stream without a repair callback. A complete native call
+whose raw code lacked its required marker therefore failed immediately. Protocol
+3 now separates upstream data, correction requests and stream boundaries, and
+connects StreamWithToolRepair to the same authenticated/proxied fetch path.
+Protocol 2 remains accepted for hosts already loaded during a local upgrade.
+
+At most two formatting continuations run. Pending tools stay withheld until the
+entire batch validates. Existing target names cannot change; original raw code
+is restored byte-for-byte; valid operations in a mixed batch remain unchanged.
+Correction text is hidden and only the original response's withheld tool slots
+are replaced. Usage is summed, including failed correction attempts. Unknown
+targets, invalid argument schemas, disabled tools, structured output and incomplete
+generations are not eligible. HTTP/network failure is never replayed here.
+
+Real-account acceptance injected one malformed command wrapper into the local
+pipeline, then used the real BPS endpoint for correction. One correction completed
+in about 5.7 seconds, returned the declared tool, and retained the original command.
+The command was inspected, not executed. Eleven regressions cover stream closure,
+large patches, mixed boundaries, cancellation, timeouts and rejection paths.
+
+## Output-limit handling
+
+An output-limited response retains response.incomplete, incomplete_details and
+reasoning usage. Pending tool items are removed and the response is not cached as
+a completed continuation. Tests cover streaming and buffered modes. No guessed
+model limit is advertised. The protocol instructs bounded, complete operations
+for large artifacts instead of one oversized payload.
+
+An authenticated A/B probe of the same prepared BPS request completed without
+max_output_tokens and returned HTTP 422 when max_output_tokens=1024 was added.
+There is no verified mechanism here to override BPS's output ceiling. A screenshot
+from a different computer cannot establish that computer's token budget or exact
+upstream behavior; no claim is made that arbitrary-size single responses now work.
 
 ## Confirmed stream lifecycle defects
 
@@ -45,7 +82,7 @@ sanitization, compaction, opaque-state preservation and image reprepare.
 
 ## Verification boundary
 
-Node: 105 pass and one Bun-only skip. Bundled Bun 1.4.2: 106 pass.
+Node: 118 pass and one Bun-only skip. Bundled Bun 1.4.2: 119 pass.
 Go tests, vet, build and native sandbox host loading pass.
 Real signed-in text and tool-result requests complete. The reported local
 conversation completed in about 65 seconds after reload, through three BPS

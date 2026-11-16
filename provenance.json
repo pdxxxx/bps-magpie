@@ -8,7 +8,10 @@
     "bridge/internal/basispoints/image_relay_disk_test.go: POSIX permission-bit assertions apply only off Windows; file lifecycle assertions remain active",
     "Go module and internal imports use github.com/pdxxxx/bps-magpie/bridge.",
     "Internal search helper identifier uses the BPS namespace.",
-    "Attribution retains author names, commit identifiers and stable repository-ID links; project-specific wording is normalized."
+    "Attribution retains author names, commit identifiers and stable repository-ID links; project-specific wording is normalized.",
+    "bridge/internal/basispoints/request.go: guide large artifacts into bounded complete tool operations.",
+    "bridge/internal/basispoints/tool_repair.go: disable formatting correction when tools are disabled or the catalog is empty.",
+    "bridge/internal/basispoints/tools.go: include the command transport marker in structural diagnostics."
   ],
   "files": [
     {

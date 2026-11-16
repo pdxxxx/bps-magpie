@@ -1,14 +1,14 @@
-# BPS 0.4.3 validation
+# BPS 0.4.4 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.4.3 / protocol 2 |
+| Windows x64 bridge build | Pass, version 0.4.4 / protocol 3, legacy 2 accepted |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 105 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 106 pass |
+| Node integration tests | 118 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.2 | 119 pass |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Eight management/diagnostic tools | Registered |
 
@@ -19,6 +19,15 @@ reset receipts. Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
 
 ## Real account and local host
+
+- One malformed raw-command fixture was corrected through the real authenticated
+  BPS endpoint, preserving its operation. No returned command was executed.
+- The installed Magpie gateway completed a real tool-generation request through
+  protocol 3 in about 5 seconds, preserving the requested command. Native local
+  diagnostics report matching plugin and bridge version 0.4.4.
+- An A/B probe verified that adding max_output_tokens=1024 to a valid prepared
+  request changes successful completion into HTTP 422. The adapter preserves
+  output-limit errors and does not claim to override the remote output ceiling.
 
 - Authenticated model discovery returned seven permitted models with reasoning
   metadata and low/medium/high/xhigh options. Existing selections were retained.

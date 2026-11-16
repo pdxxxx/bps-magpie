@@ -212,6 +212,7 @@ func prepareWithInheritedCatalog(raw []byte, scope string, replay *ReplayCache, 
 			"If no tool is needed, answer as assistant text. " + schemaNotation + "\nClient tool catalog:\n" + describeCatalog(catalog) +
 			"\nEnd of catalog. Invoke native run_officejs once. Follow each tool's specified transport: FUNCTION uses a JSON envelope; FUNCTION_CODE uses raw code plus metadata JSON in extended_summary; FUNCTION_CMD uses raw cmd plus metadata JSON; CUSTOM uses its exact marker and raw input. No Office code is executed by the proxy."
 		protocol += b.toolExamples()
+		protocol += "\nFor large files, patches, or generated artifacts, split the work across multiple bounded client-tool calls. Each call must contain one complete, valid operation; let the client execute it and return its result before producing the next part. Do not put an entire large artifact into one oversized transport payload or leave a command, JSON envelope, or patch unfinished. Keep planning concise and make progress with the next complete operation."
 	}
 	if len(b.unsupportedTools) > 0 {
 		kinds := make([]string, 0, len(b.unsupportedTools))

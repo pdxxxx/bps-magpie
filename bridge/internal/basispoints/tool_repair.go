@@ -87,7 +87,7 @@ func (b *Bridge) translateCompleted(ctx context.Context, response object, repair
 		return validation
 	}
 	original, eligible := repairableTools(response)
-	if repair == nil || !eligible || b.structured != nil {
+	if repair == nil || !eligible || b.structured != nil || b.toolChoice == "none" || len(b.tools) == 0 {
 		return validation
 	}
 	for _, item := range original {

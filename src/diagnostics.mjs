@@ -8,7 +8,7 @@ export async function bridgeInfo(binary=binaryPath){
     if(!(await stat(binary)).isFile())throw new Error();
     const text=await new Promise((resolve,reject)=>execFile(binary,["--version"],{windowsHide:true,timeout:3000,maxBuffer:4096},(error,stdout)=>error?reject(error):resolve(stdout)));
     const info=JSON.parse(text);
-    if(info.protocol!==2||typeof info.version!=="string")throw new Error();
+    if(info.protocol!==3||typeof info.version!=="string")throw new Error();
     return {available:true,protocol:info.protocol,version:info.version};
   }catch{return {available:false,message:"Bridge is missing, incompatible or cannot run; execute npm run build for this platform"};}
 }

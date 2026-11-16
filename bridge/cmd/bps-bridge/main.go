@@ -35,6 +35,7 @@ func frame(in *bufio.Reader, target any) error {
 
 func run(in *bufio.Reader, out io.Writer) error {
 	var request struct {
+		Protocol    int    `json:"protocol"`
 		Raw         []byte `json:"raw"`
 		Scope       string `json:"scope"`
 		Compact     bool   `json:"compact"`
@@ -45,6 +46,9 @@ func run(in *bufio.Reader, out io.Writer) error {
 	}
 	if err := frame(in, &request); err != nil {
 		return errors.New("invalid bridge request")
+	}
+	if request.Protocol != 0 && request.Protocol != 2 && request.Protocol != 3 {
+		return errors.New("unsupported bridge protocol")
 	}
 	if len(request.Raw) > 64<<20 {
 		return errors.New("request exceeds 64 MiB")
@@ -128,14 +132,53 @@ func run(in *bufio.Reader, out io.Writer) error {
 			return err
 		}
 	}
-	if err = enc.Encode(map[string]any{"kind": "request", "protocol": 2, "body": body, "context": snapshot, "catalog": state.raw, "effort": bridge.Effort, "warnings": bridge.Warnings}); err != nil {
+	protocol := 2
+	if request.Protocol == 3 {
+		protocol = 3
+	}
+	if err = enc.Encode(map[string]any{"kind": "request", "protocol": protocol, "body": body, "context": snapshot, "catalog": state.raw, "effort": bridge.Effort, "warnings": bridge.Warnings}); err != nil {
 		return err
 	}
-	// The remaining stdin bytes are the upstream SSE body. Native tools are
-	// withheld until the imported bridge validates the entire terminal batch.
-	stream := bridge.Stream(io.NopCloser(in))
+	// An already-loaded host may still use protocol 2 during a local update.
+	if protocol == 2 {
+		stream := bridge.Stream(io.NopCloser(in))
+		defer stream.Close()
+		if _, err = io.Copy(out, stream); err != nil {
+			return errStream
+		}
+		return nil
+	}
+	output := &framedOutput{enc: enc}
+	upstream := &framedInput{in: in}
+	repairBody := body
+	stream := bridge.StreamWithToolRepair(context.Background(), upstream, func(ctx context.Context, failed map[string]any, validation error) (map[string]any, error) {
+		request, err := basispoints.BuildToolRepairRequest(repairBody, failed, validation)
+		if err != nil {
+			return nil, err
+		}
+		if len(request) > 64<<20 {
+			return nil, errors.New("BPS correction request exceeds 64 MiB")
+		}
+		if err = output.control(map[string]any{"kind": "repair", "body": request}); err != nil {
+			return nil, err
+		}
+		// The host stops the prior HTTP body before starting this continuation.
+		if err = upstream.drain(); err != nil {
+			return nil, err
+		}
+		repairBody = request
+		upstream = &framedInput{in: in}
+		response, readErr := basispoints.ReadToolRepairResponse(upstream)
+		if err = output.control(map[string]any{"kind": "repair_done"}); err != nil {
+			return response, err
+		}
+		if err = upstream.drain(); readErr == nil {
+			readErr = err
+		}
+		return response, readErr
+	})
 	defer stream.Close()
-	if _, err = io.Copy(out, stream); err != nil {
+	if _, err = io.Copy(output, stream); err != nil {
 		return errStream
 	}
 	return nil
@@ -147,7 +190,7 @@ var version = "development"
 func main() {
 	if len(os.Args) > 1 {
 		if len(os.Args) == 2 && os.Args[1] == "--version" {
-			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"version": version, "protocol": 2})
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"version": version, "protocol": 3})
 			return
 		}
 		os.Exit(2)
