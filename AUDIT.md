@@ -1,6 +1,24 @@
 # BPS integration audit
 
-Version 0.5.0.
+Version 0.5.1.
+
+## Manual quota resets
+
+The settings document has separate connection and quota-reset tabs. Only an
+explicit confirmed page action sends a consume request; there is no reset hook
+exposed to agents. Account credentials stay in the native host. The unscoped
+page handler reads only BPS grants, honors saved account/provider proxy picks,
+and asks the user to renew stale credentials through Magpie instead of racing
+its rotating-token locks. WSS requires the exact consume route in Relay 0.1.1.
+
+An exclusive workspace lock and an atomic private receipt bind the account,
+identity, credit and redeem ID before transmission. Uncertain results block new
+credits and can only be manually retried with the same pair. Successful writes
+stay successful if a later quota read fails. Legacy uncertain receipts remain
+protected. No credentials, card IDs, proxy secrets or upstream response bodies
+are written to page resources. Public result scripts use JSON-only projections,
+escape executable markup, and have random per-action names with ten-minute
+cleanup on subsequent actions. The package excludes all runtime result files.
 
 ## GitHub and archive installation
 
@@ -25,8 +43,9 @@ later callers. Existing local provider limits remain independent of relay limits
 ## Provider-only and bounded performance changes
 
 The plugin exports no tool hook and registers zero MCP tools with the agent.
-Account listing, reset actions and receipt-management callbacks were removed.
-Magpie retains OAuth, model discovery, inference and read-only quota/credit display.
+Agent-facing account/reset/receipt tools remain removed. Manual resets run only
+from the plugin's own page. Magpie retains OAuth, model discovery, inference
+and quota/credit display.
 Existing receipt files are not touched.
 
 Selected-tool presentation narrows only prompt material, retaining the complete

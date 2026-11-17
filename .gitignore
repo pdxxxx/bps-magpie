@@ -18,3 +18,4 @@ coverage/
 dist/
 plugin-work/
 ui/probe-results/
+ui/reset-results/

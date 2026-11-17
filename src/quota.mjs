@@ -2,6 +2,7 @@
 import { readJSON } from "./network.mjs";
 export const USAGE_URL="https://chatgpt.com/backend-api/wham/usage";
 export const CREDITS_URL="https://chatgpt.com/backend-api/wham/rate-limit-reset-credits";
+export const CONSUME_URL=CREDITS_URL+"/consume";
 
 function integer(value){
   if(typeof value==="string" && /^\d+$/.test(value.trim()))value=Number(value);
@@ -65,12 +66,35 @@ export function projectUsage(usage,details,{now=Date.now(),detailsError}={}){
 
 export function quotaHeaders(auth){return new Headers({authorization:"Bearer "+auth.access,"chatgpt-account-id":auth.workspaceId,"openai-beta":"codex-1","oai-language":"zh-CN",originator:"Codex Desktop",accept:"application/json","sec-fetch-site":"none","sec-fetch-mode":"no-cors","sec-fetch-dest":"empty",priority:"u=4, i"});}
 
-async function request(auth,url,{fetchImpl=globalThis.fetch,signal}={}){
+async function request(auth,url,{fetchImpl=globalThis.fetch,signal,body}={}){
   const timeout=AbortSignal.timeout(20000);const combined=signal?AbortSignal.any([signal,timeout]):timeout;
   const headers=quotaHeaders(auth);
-  const response=await fetchImpl(url,{method:"GET",headers,redirect:"error",signal:combined});
+  if(body)headers.set("content-type","application/json");
+  const response=await fetchImpl(url,{method:body?"POST":"GET",headers,body:body?JSON.stringify(body):undefined,redirect:"error",signal:combined});
   if(!response.ok){await response.body?.cancel();throw Object.assign(new Error("ChatGPT/Codex 额度接口返回 HTTP "+response.status),{status:response.status});}
   return readJSON(response,1024*1024,"quota");
+}
+
+// Credit IDs stay in the private operation receipt, never in the panel result.
+export async function availableResetCredit(auth,deps={}){
+  const data=await request(auth,CREDITS_URL,deps);
+  const list=Array.isArray(data)?data:data?.credits??data?.rate_limit_reset_credits??data?.items??data?.data;
+  if(!Array.isArray(list))throw new Error("无法确认可用重置卡，请稍后刷新。");
+  const cards=list.filter(c=>c&&c.status==="available"&&c.reset_type==="codex_rate_limits"&&typeof c.id==="string"&&c.id.length>0&&c.id.length<=256&&!/[\s\p{Cc}\p{Cf}]/u.test(c.id))
+    .map(c=>({id:c.id,until:c.expires_at==null?null:instant(c.expires_at)}))
+    .filter(c=>c.until===null||new Date(c.until).getTime()>Date.now());
+  cards.sort((a,b)=>(a.until?new Date(a.until).getTime():Infinity)-(b.until?new Date(b.until).getTime():Infinity));
+  if(!cards.length)throw new Error("没有可用的重置次数。");
+  return cards[0];
+}
+
+export async function consumeReset(auth,{requestId,creditId},deps={}){
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)||typeof creditId!=="string"||!creditId||creditId.length>256||/[\s\p{Cc}\p{Cf}]/u.test(creditId))throw new Error("无效的重置操作记录。");
+  const result=await request(auth,CONSUME_URL,{...deps,body:{redeem_request_id:requestId,credit_id:creditId}});
+  if(["success","reset"].includes(result?.code)&&Number.isSafeInteger(result.windows_reset)&&result.windows_reset>0)return {status:"success",message:`已重置 ${result.windows_reset} 个额度窗口。`};
+  const messages={nothing_to_reset:"当前没有需要重置的额度窗口，未消耗次数。",no_credit:"该重置卡已不可用，请刷新次数。",already_redeemed:"原重置卡已被使用，请查看更新后的额度。",already_used:"原重置卡已被使用，请查看更新后的额度。"};
+  if(Object.hasOwn(messages,result?.code))return {status:"finished",message:messages[result.code]};
+  throw new Error("上游未明确确认重置结果，请核对原操作。");
 }
 
 export async function queryQuota(auth,deps={}){

@@ -1,6 +1,6 @@
 {
   "name": "opencode-bps-auth",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Magpie provider for independent Excel/BPS OAuth and Responses inference",
   "type": "module",
   "main": "./index.mjs",
@@ -13,6 +13,7 @@
     "src",
     "ui",
     "!ui/probe-results/**",
+    "!ui/reset-results/**",
     "bin/bps-bridge-win32-x64.exe",
     "bin/bps-bridge-win32-arm64.exe",
     "bin/bps-bridge-linux-x64",

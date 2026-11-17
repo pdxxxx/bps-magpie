@@ -69,15 +69,17 @@ async function showProbe(test){
 }
 let busy=false;
 element("testRelay").addEventListener("click",async()=>{
- if(busy)return;busy=true;element("controls").disabled=true;
+ if(busy||globalThis.bpsResetBusy)return;busy=true;globalThis.bpsSettingsBusy=true;element("controls").disabled=true;
  try{await testRelay();}catch(error){element("probe-panel").hidden=true;announce("WSS 测试失败："+(error.message||"未能完成测试。"),true,"error");}
- finally{busy=false;element("controls").disabled=false;}
+ finally{busy=false;globalThis.bpsSettingsBusy=false;element("controls").disabled=false;}
 });
 element("reload").addEventListener("click",()=>load().catch(e=>announce(e.message,true)));
 element("save").addEventListener("click",async ()=>{
+ if(busy||globalThis.bpsResetBusy)return;
+ globalThis.bpsSettingsBusy=true;
  try{
   const fields=currentFields(),next=optionsFromFields(fields,saved);
-  delete next.relayTest;delete next.relayProbeId;
+  delete next.relayTest;delete next.relayProbeId;delete next.bpsPanelAction;
   element("controls").disabled=true;announce("正在保存设置…",false,"saving");
   await bounded(magpie.options.set(next));
   const confirmed=await bounded(magpie.options.get())||{};
@@ -90,7 +92,7 @@ element("save").addEventListener("click",async ()=>{
   for(const key of fieldIds)element(key).value=actual[key];
   const reloadHint=expected.relayEnabled?"已保存并确认。请在插件列表关闭后重新启用 BPS，新的 WSS 路由才会生效。":"已保存并确认。请在插件列表关闭后重新启用 BPS，使网络设置生效。";
   announce(reloadHint,false,"saved");
- }catch(error){announce("保存失败："+(error.message||"Magpie 未接受配置。"),true,"error");}finally{element("controls").disabled=false;}
+ }catch(error){announce("保存失败："+(error.message||"Magpie 未接受配置。"),true,"error");}finally{globalThis.bpsSettingsBusy=false;element("controls").disabled=false;}
 });
 let readyTimer;
 try{

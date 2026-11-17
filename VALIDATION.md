@@ -1,15 +1,15 @@
-# BPS 0.5.0 validation
+# BPS 0.5.1 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.5.0 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.5.1 / protocol 3, legacy 2 accepted |
 | Windows/macOS/Linux x64 and arm64 | Six cross-builds; architecture and SHA-256 checked |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 139 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 140 pass across the 21 root test files |
+| Node integration tests | 153 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.4 | 154 pass across the 23 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Native host agent tools | Zero; provider-only |
 
@@ -18,6 +18,26 @@ identity-bound refresh, models/reasoning metadata, proxy behavior, streaming,
 tool histories, attachments, compaction, continuation cache and read-only quota.
 Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
+
+## Version 0.5.1 manual reset UI
+
+- Connection and reset tabs share the same settings document. Accounts load
+  only when the reset tab is first opened. A row combines account, count and
+  reset action; explicit inline confirmation is required before consumption.
+- Native Windows Magpie verified real account/count reads over configured WSS,
+  earliest-card preparation and cancellation. No real reset credit was spent.
+- Synthetic tests exercise successful consumption, no-op outcomes, unknown
+  results across reloads, same-ID/same-card retries, concurrent clicks, another
+  slot of the same workspace, changed identity, stale credentials, removed
+  accounts, legacy receipts, post-success read failure and secret redaction.
+- UI tests verify tabs, read-on-demand, cancel, confirm, result refresh, unknown
+  counts, other-provider isolation, safe text labels and preserved options.
+- Relay 0.1.1 passes Go tests/vet and exact-route checks. Its deployed consume
+  route returned the expected upstream HTTP 401 to an unsigned probe; it was
+  not a live successful reset. The relay address and token were preserved.
+- Magpie's subscription editor does not mount its provider panel slot. The
+  reset UI therefore lives in the plugin page, not the native account card.
+  Magpie itself is unchanged; no agent MCP tools are registered.
 
 ## Version 0.5.0 GitHub installation
 

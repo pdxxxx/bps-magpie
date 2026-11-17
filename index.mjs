@@ -1,5 +1,6 @@
 import { beginLogin, createCredentialManager } from "./src/auth.mjs";
 import { runRequestedProbe } from "./src/relay-probe.mjs";
+import { runPanelAction } from "./src/reset-panel.mjs";
 import { makeFetch } from "./src/provider.mjs";
 import { fetchModelCatalog } from "./src/models.mjs";
 import { PROVIDER, BASE_URL, REFRESH_LEAD } from "./src/constants.mjs";
@@ -9,10 +10,11 @@ import {createConversationStore} from "./src/state.mjs";
 import {createAttachmentStore} from "./src/attachments.mjs";
 
 // Export only the plugin; Magpie treats every exported function as a plugin.
-export const BPSPlugin=async ({client,magpie},options={})=>{
+export const BPSPlugin=async ({client,magpie,directory},options={})=>{
   if(options.continuationCache!==undefined&&typeof options.continuationCache!=="boolean")throw new Error("continuationCache must be a boolean");
   const network={fetchImpl:createFetch(options),state:createConversationStore({enabled:options.continuationCache!==false}),attachments:createAttachmentStore()};
   if(magpie && globalThis.Bun && options.relayEnabled===true)void runRequestedProbe(options).catch(()=>console.warn("BPS: inline WSS test could not write its result in the plugin directory"));
+  if(magpie&&globalThis.Bun&&directory&&options.bpsPanelAction)void runPanelAction({directory,options}).catch(()=>console.warn("BPS: account panel could not finish; refresh the panel to check its receipt"));
   const credentials=createCredentialManager(client,network);
   return {
     config:async cfg=>{

@@ -7,3 +7,4 @@ main{max-width:520px;padding:28px}.brand{margin-bottom:22px}.brand h1{margin:0;f
 #status[data-state=saving]{opacity:.72}#status[data-state=saved],#status[data-state=tested]{color:var(--magpie-accent,#2563eb)}#status[data-state=dirty]{opacity:.8}.actions{flex-wrap:wrap}
 
 #probe-image{display:block;width:100%;max-width:500px;margin:12px 0}#probe-image[hidden]{display:none}
+.page-tabs{display:flex;gap:4px;border-bottom:1px solid color-mix(in srgb,currentColor 15%,transparent);margin:0 0 20px}.page-tabs button{font:inherit;font-size:14px;border:0;border-radius:0;background:transparent;color:inherit;padding:10px 14px;opacity:.6}.page-tabs button[aria-selected=true]{opacity:1;border-bottom:2px solid var(--magpie-accent,#2563eb);color:var(--magpie-accent,#2563eb)}[role=tabpanel][hidden]{display:none}
