@@ -158,7 +158,7 @@ export function makeFetch(getAuth,credentials,options={},deps={}){
       if(timedOut)return apiError(504,"basispoints_timeout","BPS request timed out; no automatic replay was attempted");
       if(error.code==="basispoints_stream_timeout")return apiError(504,error.code,error.message);
       const status=error.signIn==="expired"?401:error.status||502;
-      return apiError(status,error.code==="basispoints_previous_response_not_found"?error.code:status===400?"basispoints_request_invalid":status===401?"basispoints_auth_expired":"basispoints_transport_error",error.message || "BPS request failed",status===401?{"x-magpie-sign-in":"expired"}:{});
+      return apiError(status,["basispoints_previous_response_not_found","basispoints_bridge_unavailable"].includes(error.code)?error.code:status===400?"basispoints_request_invalid":status===401?"basispoints_auth_expired":"basispoints_transport_error",error.message || "BPS request failed",status===401?{"x-magpie-sign-in":"expired"}:{});
     }finally{if(!streaming)metrics?.finish(outcome);}
   };
 }

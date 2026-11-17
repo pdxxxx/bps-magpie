@@ -1,14 +1,15 @@
-# BPS 0.4.9 validation
+# BPS 0.5.0 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.4.9 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.5.0 / protocol 3, legacy 2 accepted |
+| Windows/macOS/Linux x64 and arm64 | Six cross-builds; architecture and SHA-256 checked |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 136 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.2 | 137 pass across the 20 root test files |
+| Node integration tests | 139 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.2 | 140 pass across the 21 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Native host agent tools | Zero; provider-only |
 
@@ -17,6 +18,22 @@ identity-bound refresh, models/reasoning metadata, proxy behavior, streaming,
 tool histories, attachments, compaction, continuation cache and read-only quota.
 Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
+
+## Version 0.5.0 GitHub installation
+
+The earlier GitHub tree excluded bin/, while the release ZIP contained only the
+Windows x64 bridge. GitHub installs could authenticate and list models but failed
+before inference. All six precompiled bridges and their versioned checksum
+manifest are now tracked in Git. Unix binaries carry executable file modes.
+No compiler, install hook or runtime download is needed for supported platforms.
+The prepack guard rejects missing, corrupt or wrong-architecture binaries and
+a manifest version that differs from the package version. Runtime errors identify
+the platform and release to reinstall, preserving accounts and avoiding an
+upstream request when the bridge is missing.
+
+Windows is the native test platform. Other architectures were cross-compiled
+and inspected, not run on native machines. The packaging fix does not change
+upstream permissions, inference protocol, WSS configuration or concurrency.
 
 ## Version 0.4.9 settings and WSS diagnostics
 

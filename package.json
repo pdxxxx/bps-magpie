@@ -1,6 +1,6 @@
 {
   "name": "opencode-bps-auth",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "Magpie provider for independent Excel/BPS OAuth and Responses inference",
   "type": "module",
   "main": "./index.mjs",
@@ -19,6 +19,7 @@
     "bin/bps-bridge-linux-arm64",
     "bin/bps-bridge-darwin-x64",
     "bin/bps-bridge-darwin-arm64",
+    "bin/manifest.json",
     "bridge",
     "scripts",
     "tests",
@@ -32,6 +33,8 @@
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:all": "node scripts/build.mjs --all",
+    "prepack": "node scripts/verify-binaries.mjs",
     "test": "node scripts/test.mjs",
     "test:js": "node --test tests/*.test.mjs"
   },

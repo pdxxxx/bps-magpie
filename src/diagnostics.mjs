@@ -2,6 +2,7 @@ import {execFile} from "node:child_process";
 import {stat,readFile} from "node:fs/promises";
 import {binaryPath} from "./bridge.mjs";
 import {proxyOption} from "./network.mjs";
+import {bridgeInstallError} from "./platforms.mjs";
 
 export async function bridgeInfo(binary=binaryPath){
   try{
@@ -10,7 +11,7 @@ export async function bridgeInfo(binary=binaryPath){
     const info=JSON.parse(text);
     if(info.protocol!==3||typeof info.version!=="string")throw new Error();
     return {available:true,protocol:info.protocol,version:info.version};
-  }catch{return {available:false,message:"Bridge is missing, incompatible or cannot run; execute npm run build for this platform"};}
+  }catch{return {available:false,message:bridgeInstallError("is missing, incompatible or cannot run").message};}
 }
 export async function diagnose(options={},state){
   const pkg=JSON.parse(await readFile(new URL("../package.json",import.meta.url),"utf8"));

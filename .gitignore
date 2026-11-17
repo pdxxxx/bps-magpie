@@ -1,7 +1,14 @@
 .reference/
 .sandbox/
 node_modules/
-bin/
+bin/*
+!bin/bps-bridge-win32-x64.exe
+!bin/bps-bridge-win32-arm64.exe
+!bin/bps-bridge-linux-x64
+!bin/bps-bridge-linux-arm64
+!bin/bps-bridge-darwin-x64
+!bin/bps-bridge-darwin-arm64
+!bin/manifest.json
 *.tgz
 *.log
 .env

@@ -1,6 +1,15 @@
 # BPS integration audit
 
-Version 0.4.9.
+Version 0.5.0.
+
+## GitHub and archive installation
+
+Precompiled bridges for Windows, macOS and Linux (x64/arm64) are tracked in Git
+and shipped with a versioned SHA-256 manifest. The package guard checks every
+binary's checksum and executable header before packing. Unix executable modes
+must be preserved in Git and release archives. The plugin never downloads or
+compiles executable code at runtime. Missing/unlaunchable files produce a local
+installation error with the platform and release URL; no BPS inference is sent.
 
 ## Optional WSS transport
 

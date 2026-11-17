@@ -1,6 +1,6 @@
 # BPS for Magpie
 
-当前版本：0.4.9。仅作为 Magpie provider，增加默认关闭、手动配置的可选 WSS 中继通道。
+当前版本：0.5.0。仅作为 Magpie provider，支持默认关闭、手动配置的可选 WSS 中继通道。
 
 独立 Magpie / OpenCode provider：Excel/BPS OAuth 授权、令牌刷新、Responses
 推理、流式文本与工具往返，以及 ChatGPT/Codex 额度与可用重置次数展示。
@@ -9,15 +9,24 @@
 
 ## 安装
 
-在 [GitHub Releases](https://github.com/pdxxxx/bps-magpie/releases) 下载
-`bps-magpie-0.4.9-win32-x64.zip`，解压到任意固定目录。在 Magpie → Plugins →
-Add a plugin 中填写解压后的 `bps-magpie` 目录。Windows x64 发布包已包含转换程序，
-不需要安装 Node.js 或 Go。也可执行（将路径替换为实际解压目录）：
+在 Magpie → Plugins → Add a plugin 中填写 `github:pdxxxx/bps-magpie`。
+从 v0.5.0 起，GitHub 仓库和发布包均包含 Windows、macOS、Linux 的 x64/arm64
+预编译转换程序，不需要安装 Node.js 或 Go，也不依赖安装脚本或首次运行下载。
+
+也可在 [GitHub Releases](https://github.com/pdxxxx/bps-magpie/releases) 下载
+`bps-magpie-0.5.0.zip` 通用包，解压到当前用户可写的固定目录，
+在 Add a plugin 中填写解压后的 `bps-magpie` 目录。
+Windows x64 也可下载较小的 `bps-magpie-0.5.0-win32-x64.zip`。
+本地目录安装也可执行（将路径替换为实际解压目录）：
 
 ~~~powershell
 & "$env:LOCALAPPDATA\Programs\magpie\magpie.exe" plugin add D:\Workspace\bps-magpie
 & "$env:LOCALAPPDATA\Programs\magpie\magpie.exe" plugin login bps
 ~~~
+
+如果旧版通过 GitHub 地址安装后提示 `BPS bridge is not built for this platform`，
+请更新该插件至 v0.5.0 或更高版本，再关闭并重新启用 BPS。旧版源码安装缺少
+`bin/` 程序；重复发送推理请求不能补齐文件。更新插件不需要删除账号或重新登录。
 
 在浏览器完成 ChatGPT Excel/BPS 授权后，复制地址栏的完整回调 URL 到 Magpie。
 必须包含 code 和 state，不要只贴授权码。回调页即使报错，也可以复制带这些
@@ -208,7 +217,10 @@ bun test @tests
 Bun 和 bin/ 内对应平台的程序，不需要 Go 或其他网关服务。
 
 设置 TARGET_OS=linux|darwin|win32 和 TARGET_ARCH=x64|arm64 可交叉编译。
-Magpie 不执行 npm postinstall，所以发布源码包时需自行构建相应二进制。
+发布维护者运行 `npm run build:all` 生成六个平台的程序及 SHA-256 清单，
+将 `bin/` 中这些文件一并提交到 Git，确保 GitHub 地址安装可直接运行。
+macOS/Linux 程序必须保留 Git 可执行位；Magpie 不执行 npm postinstall。
+`npm pack` 会先检查六个程序的文件、架构、版本清单和哈希，缺项时拒绝打包。
 包中保留完整 Go 源码、许可证和第三方声明。
 
 ~~~text

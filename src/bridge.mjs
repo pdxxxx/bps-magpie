@@ -1,19 +1,22 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MAX_BODY } from "./constants.mjs";
 import {terminalObserver} from "./events.mjs";
 import {progressReader} from "./progress.mjs";
+import {bridgeName,bridgeInstallError,bridgeTargets} from "./platforms.mjs";
 
-export const binaryPath=fileURLToPath(new URL(`../bin/bps-bridge-${process.platform}-${process.arch}${process.platform==="win32"?".exe":""}`,import.meta.url));
+export const binaryPath=fileURLToPath(new URL(`../bin/${bridgeName()}`,import.meta.url));
 
 export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryPath,compact=false,previous,terminal,catalog,keepContext=false,streamIdleMs,metrics,promptCacheKey}={}) {
   signal?.throwIfAborted();
-  if(!existsSync(binary)) throw new Error("BPS bridge is not built for this platform. Run npm run build in the plugin directory (Go 1.27.4+ required).");
+  if(!bridgeTargets.includes(`${process.platform}-${process.arch}`))throw bridgeInstallError();
+  try{if(!statSync(binary).isFile())throw new Error();}catch{throw bridgeInstallError();}
   if(Buffer.byteLength(raw)>MAX_BODY) throw Object.assign(new Error("BPS request exceeds 64 MiB"),{status:413});
-  const child=spawn(binary,[],{stdio:["pipe","pipe","pipe"],windowsHide:true});
-  let pending=Buffer.alloc(0),dead=false,upstreamReader;
-  const exit=new Promise(resolve=>{child.once("error",()=>resolve(-1));child.once("exit",code=>resolve(code??-1));});
+  let child;
+  try{child=spawn(binary,[],{stdio:["pipe","pipe","pipe"],windowsHide:true});}catch{throw bridgeInstallError("cannot start");}
+  let pending=Buffer.alloc(0),dead=false,upstreamReader,launchError;
+  const exit=new Promise(resolve=>{child.once("error",()=>{launchError=bridgeInstallError("cannot start");resolve(-1);});child.once("exit",code=>resolve(code??-1));});
   child.stdin.on("error",()=>{});
   child.stderr.resume();
   const iterator=child.stdout[Symbol.asyncIterator]();
@@ -48,7 +51,7 @@ export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryP
       const id=await upload(Buffer.from(event.body,"base64"),event.contentType,event.cacheKey);
       await send(JSON.stringify({id})+"\n");
     }
-    if(prepared.protocol!==3||typeof prepared.context!=="string")throw new Error("BPS bridge is out of date; rebuild the plugin binary");
+    if(prepared.protocol!==3||typeof prepared.context!=="string")throw bridgeInstallError("is incompatible");
     return {body:Buffer.from(prepared.body,"base64"),context:Buffer.from(prepared.context,"base64"),catalog:Buffer.from(prepared.catalog||"","base64"),effort:prepared.effort,warnings:prepared.warnings||[],dispose,
       stream(upstream){
         if(!upstream) {dispose();throw new Error("BPS returned an empty stream");}
@@ -115,7 +118,7 @@ export async function startBridge(raw,scope,{signal,upload,repair,binary=binaryP
           },cancel(){dispose();}
         });
       }};
-  }catch(error){dispose();throw error;}
+  }catch(error){dispose();throw launchError||error;}
 }
 
 export async function collectResponse(stream){
