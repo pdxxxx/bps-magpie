@@ -1,6 +1,6 @@
 {
   "name": "opencode-bps-auth",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Magpie provider for independent Excel/BPS OAuth and Responses inference",
   "type": "module",
   "main": "./index.mjs",

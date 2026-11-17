@@ -1,6 +1,16 @@
 # BPS integration audit
 
-Version 0.5.1.
+Version 0.5.2.
+
+## Inline image counts
+
+The native attachment path no longer inherits the temporary image relay's
+20-image default. Its default count is unlimited (non-positive), while explicit
+positive limits remain available to bounded internal callers. All typed message,
+agent-message and tool-output images are still validated before the first
+upload. Per-image bytes, aggregate bytes, dimensions and the complete request
+budget remain independent of image count. Upload ordering, account isolation,
+duplicate reuse, cancellation and bounded cache eviction are unchanged.
 
 ## Manual quota resets
 

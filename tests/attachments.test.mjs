@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createAttachmentStore} from '../src/attachments.mjs';
 import {makeFetch} from '../src/provider.mjs';
 import {BASE_URL} from '../src/constants.mjs';
-import {auth,sse} from './helpers.mjs';
+import {auth,sse,completed,message} from './helpers.mjs';
 const digest='a'.repeat(64),other='b'.repeat(64);
 const manager={current:async f=>f()};
 const tick=()=>new Promise(r=>setImmediate(r));
@@ -63,4 +63,47 @@ test('shared host store never reuses file IDs across accounts or workspaces',asy
   assert.equal((await fetch(BASE_URL+'/responses',{body:JSON.stringify(body)})).status,200);
  }
  assert.equal(uploads,3);
+});
+
+test('more than 20 message images reach inference in order, beyond the host cache capacity',async()=>{
+ // Distinct PNG payloads (trailing bytes do not change the PNG) exercise uploads,
+ // not just the duplicate-image fast path. Repeat the first after cache eviction.
+ const urls=Array.from({length:160},(_,i)=>'data:image/png;base64,'+Buffer.concat([Buffer.from(image,'base64'),Buffer.from([i])]).toString('base64'));
+ urls.push(urls[0]);let uploads=0,inferences=0;
+ const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async(url,init)=>{
+  if(url.endsWith('/attachments'))return Response.json({openai_file_id:'file-'+(++uploads)});
+  inferences++;const content=JSON.parse(init.body).input.flatMap(x=>x.content||[]).filter(x=>x.type==='input_image');
+  assert.equal(content.length,161);assert.deepEqual(content.map(x=>x.file_id),[...Array.from({length:160},(_,i)=>'file-'+(i+1)),'file-1']);
+  return sse();
+ }});
+ const response=await fetch(BASE_URL+'/responses',{body:JSON.stringify({...body,input:[{role:'user',content:urls.map(image_url=>({type:'input_image',image_url}))}]})});
+ assert.equal(response.status,200,await response.text());assert.equal(uploads,160);assert.equal(inferences,1);
+});
+
+test('message, agent-history and tool screenshots beyond 20 survive inference and compaction',async()=>{
+ const url='data:image/png;base64,'+image;
+ for(const endpoint of ['/responses','/responses/compact']){
+  let uploads=0,inferences=0;
+  const input=[{role:'user',content:[{type:'input_image',image_url:url}]},{type:'agent_message',author:'/root/worker',recipient:'/root',content:Array.from({length:25},()=>({type:'input_image',image_url:url}))},
+   {type:'function_call',name:'view_image',call_id:'screenshots',arguments:'{}'},
+   {type:'function_call_output',call_id:'screenshots',output:Array.from({length:25},()=>({type:'input_image',image_url:url}))}];
+  const marker={type:'compaction',id:'cmp_many_images',encrypted_content:'opaque-context'};
+  const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async(u,init)=>{
+   if(u.endsWith('/attachments')){uploads++;return Response.json({openai_file_id:'file-many'});}
+   inferences++;const raw=init.body.toString();
+   assert.equal((raw.match(/"file_id":"file-many"/g)||[]).length,26);
+   assert.equal(raw.split(url).length-1,25);
+   return endpoint.endsWith('compact')?sse([completed([message('context'),marker])]):sse();
+  }});
+  const response=await fetch(BASE_URL+endpoint,{body:JSON.stringify({...body,input})});
+  assert.equal(response.status,200,await response.text());assert.equal(uploads,1);assert.equal(inferences,1);
+ }
+});
+
+test('invalid image after the former count limit still fails before uploading anything',async()=>{
+ let calls=0;const content=Array.from({length:25},()=>({type:'input_image',image_url:'data:image/png;base64,'+image}));
+ content.push({type:'input_image',image_url:'data:image/png;base64,PRIVATE_INVALID'});
+ const fetch=makeFetch(async()=>auth(),manager,{}, {fetchImpl:async()=>{calls++;return sse();}});
+ const response=await fetch(BASE_URL+'/responses',{body:JSON.stringify({...body,input:[{role:'user',content}]})});
+ const text=await response.text();assert.equal(response.status,400);assert.equal(calls,0);assert.doesNotMatch(text,/at most 20|PRIVATE_INVALID/);
 });

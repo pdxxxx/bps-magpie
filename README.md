@@ -1,6 +1,6 @@
 # BPS for Magpie
 
-当前版本：0.5.1。仅作为 Magpie provider，支持手动额度重置及默认关闭的可选 WSS 中继通道。
+当前版本：0.5.2。仅作为 Magpie provider，支持手动额度重置及默认关闭的可选 WSS 中继通道。
 
 独立 Magpie / OpenCode provider：Excel/BPS OAuth 授权、令牌刷新、Responses
 推理、流式文本与工具往返，以及 ChatGPT/Codex 额度与可用重置次数展示。
@@ -14,9 +14,9 @@
 预编译转换程序，不需要安装 Node.js 或 Go，也不依赖安装脚本或首次运行下载。
 
 也可在 [GitHub Releases](https://github.com/pdxxxx/bps-magpie/releases) 下载
-`bps-magpie-0.5.1.zip` 通用包，解压到当前用户可写的固定目录，
+`bps-magpie-0.5.2.zip` 通用包，解压到当前用户可写的固定目录，
 在 Add a plugin 中填写解压后的 `bps-magpie` 目录。
-Windows x64 也可下载较小的 `bps-magpie-0.5.1-win32-x64.zip`。
+Windows x64 也可下载较小的 `bps-magpie-0.5.2-win32-x64.zip`。
 本地目录安装也可执行（将路径替换为实际解压目录）：
 
 ~~~powershell
@@ -193,6 +193,10 @@ full-history-required 表示下次需要完整历史。流式响应提前返回 
 - fetch 支持 URL + init 及标准 Request 对象；取消请求体读取、总超时 504 和
   OAuth/额度/附件的流式大小限制均已覆盖。
 - 支持 HTTPS 图片和内联图片。先校验整批请求，再以同一账号上传附件。
+- 从 v0.5.2 起，本地不再限制每个请求的图片张数；用户消息、历史中的子代理消息和
+  工具截图均可超过 20 张，推理与压缩默认生效，无需配置。图片原有的容量校验仍保留：
+  单张解码后不超过 20 MiB、合计不超过 32 MiB、单图不超过 64 百万像素，完整请求
+  不超过 64 MiB。上游仍可能按自己的容量规则拒绝请求，插件保留其错误。
 - 宿主按账号/工作区与图片摘要缓存最多 128 个附件 ID，固定有效期 10 分钟。
   同图在途上传可合并；缓存不保存图片正文和凭据。单个调用取消不影响其他等待者，
   所有调用取消后终止上传。上游拒绝或失败会失效相关缓存，不自动重放推理。

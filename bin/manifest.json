@@ -1,30 +1,30 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.2",
   "protocol": 3,
   "binaries": {
     "bps-bridge-win32-x64.exe": {
       "bytes": 6604800,
-      "sha256": "d82807c243794c31a28171645898af06978ca94843967175c11c15590f42ddc5"
+      "sha256": "4093652914e3d2e672aef65afeeb24d0696325a8df218b9d7aaacde5e22648c8"
     },
     "bps-bridge-win32-arm64.exe": {
       "bytes": 6036480,
-      "sha256": "1d8b459a113ccd21febc266ae19f0cf1bfa1e44565c619eb63cd65e21d907e36"
+      "sha256": "b7f515194a26c8d49d53f8ce7565ba9f10684571d95eea5dc0b3d7d59c2fe503"
     },
     "bps-bridge-linux-x64": {
       "bytes": 6455456,
-      "sha256": "fd4f4f9ba47f403bee3d872289a1bc2ffa8115dac9e52bfb67c46129e08fc1fc"
+      "sha256": "f185c08976803778bb101f0eef144f2ca3c772fd0f4d7bbfb5674b49eb77b621"
     },
     "bps-bridge-linux-arm64": {
       "bytes": 6095008,
-      "sha256": "b0382ef2ee142bb784a8509969696c66e46b60b4a6a11544f4b9e1d84d3307b5"
+      "sha256": "f8a0bae2f558046fecd49e80b026ecc6a857ce4c7a6137aa96506f4742720cbf"
     },
     "bps-bridge-darwin-x64": {
       "bytes": 6573584,
-      "sha256": "6b4349d405bab7560c790827e9db2e16a3c886bd2a7eca58a81f703f9a64db3d"
+      "sha256": "89d9f4e5f96d84e2da98a0dc974b4f97406d2357f52e92b924ec725cf2728e9e"
     },
     "bps-bridge-darwin-arm64": {
       "bytes": 6145730,
-      "sha256": "9e95947d45f58533c9ece09c4599eaec02eeed1cf0f0a6800a7bca23282c5049"
+      "sha256": "9eaab5718b9b8d5d3dfeb1da72ca2c85623c46e7bf9982627965175a9a87c2a8"
     }
   }
 }

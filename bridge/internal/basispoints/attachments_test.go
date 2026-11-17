@@ -99,12 +99,13 @@ func TestNativeImagesValidateAllBeforeUpload(t *testing.T) {
 			require.NotContains(t, err.Error(), "PRIVATE_INVALID")
 		})
 	}
-	// 20 occurrences remain legal; invalid detail and mixed references fail locally.
-	_, err := PrepareNativeImages(nativeTestRequest(t, strings.Fields(strings.Repeat(url+" ", 20))...))
-	require.NoError(t, err)
-	_, err = PrepareNativeImages(nativeTestRequest(t, strings.Fields(strings.Repeat(url+" ", 21))...))
-	require.EqualError(t, err, "local gateway is configured for at most 20 inline images per request")
-	_, err = PrepareNativeImagesWithLimit(nativeTestRequest(t, url, url), 1)
+	// Native uploads have no implicit count ceiling; explicit callers can bound it.
+	for _, count := range []int{20, 21, 1000} {
+		plan, err := PrepareNativeImages(nativeTestRequest(t, strings.Fields(strings.Repeat(url+" ", count))...))
+		require.NoError(t, err)
+		require.Len(t, plan.parts, count)
+	}
+	_, err := PrepareNativeImagesWithLimit(nativeTestRequest(t, url, url), 1)
 	require.EqualError(t, err, "local gateway is configured for at most 1 inline images per request")
 	raw := nativeTestRequest(t, url)
 	_, err = PrepareNativeImages(bytes.ReplaceAll(raw, []byte("original"), []byte("invalid")))

@@ -1,15 +1,15 @@
-# BPS 0.5.1 validation
+# BPS 0.5.2 validation
 
 ## Automated checks
 
 | Check | Result |
 | --- | --- |
-| Windows x64 bridge build | Pass, version 0.5.1 / protocol 3, legacy 2 accepted |
+| Windows x64 bridge build | Pass, version 0.5.2 / protocol 3, legacy 2 accepted |
 | Windows/macOS/Linux x64 and arm64 | Six cross-builds; architecture and SHA-256 checked |
 | Go tests | Pass |
 | go vet ./... | Pass |
-| Node integration tests | 153 pass, 1 Bun-only proxy skip |
-| Magpie bundled Bun 1.4.4 | 154 pass across the 23 root test files |
+| Node integration tests | 156 pass, 1 Bun-only proxy skip |
+| Magpie bundled Bun 1.4.4 | 157 pass across the 23 root test files |
 | Native sandbox plugin load and diagnostics | Pass, matching bridge |
 | Native host agent tools | Zero; provider-only |
 
@@ -18,6 +18,21 @@ identity-bound refresh, models/reasoning metadata, proxy behavior, streaming,
 tool histories, attachments, compaction, continuation cache and read-only quota.
 Stream-progress regressions reproduce the formerly unbounded
 wait and verify explicit terminal errors without automatic request replay.
+
+## Version 0.5.2 inline image counts
+
+- Native preparation accepts 21 and 1,000 image occurrences without a count
+  ceiling. Explicit caller-supplied positive limits still work.
+- Real compiled bridge integration accepts 160 distinct images plus a repeat
+  of the first after the 128-entry host cache boundary. All 161 image references
+  keep their order, 160 uploads occur, and the repeat reuses its original ID.
+- Mixed user images, agent history and tool screenshots (51 occurrences) reach
+  both inference and compaction. Tool screenshots remain inline; identical
+  message images upload once.
+- A malformed 26th image rejects the whole request before any upload or
+  inference. Existing byte/dimension limits and account/cancellation tests pass.
+- Upstream responses in these tests are synthetic. They verify local request
+  handling, not the upstream's current acceptance of arbitrary image counts.
 
 ## Version 0.5.1 manual reset UI
 

@@ -68,16 +68,14 @@ type NativeImages struct {
 
 // PrepareNativeImages checks every inline image before any upload. Only typed
 // message/tool-output content is traversed; arbitrary tool arguments are opaque.
+// There is no local image-count ceiling. Byte and dimension checks still apply.
 func PrepareNativeImages(raw []byte) (*NativeImages, error) {
-	return PrepareNativeImagesWithLimit(raw, imageRelayMaxRequestImages)
+	return PrepareNativeImagesWithLimit(raw, 0)
 }
 
-// PrepareNativeImagesWithLimit is PrepareNativeImages with an administrator-
-// configurable per-request inline image limit.
+// PrepareNativeImagesWithLimit optionally bounds the number of inline images.
+// Non-positive values mean no count limit; positive values are explicit limits.
 func PrepareNativeImagesWithLimit(raw []byte, maxImages int) (*NativeImages, error) {
-	if maxImages < 1 {
-		maxImages = imageRelayMaxRequestImages
-	}
 	var source object
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -115,12 +113,12 @@ func PrepareNativeImagesWithLimit(raw []byte, maxImages int) (*NativeImages, err
 			if _, exists := part["file_id"]; exists {
 				return nil, fmt.Errorf("basispoints input_image requires exactly one image reference")
 			}
-			if plan.inlineCount >= maxImages {
+			if maxImages > 0 && plan.inlineCount >= maxImages {
 				return nil, fmt.Errorf("local gateway is configured for at most %d inline images per request", maxImages)
 			}
 			plan.inlineCount++
-			// Apply the same administrator-configured image size and count
-			// safeguards as the temporary HTTPS relay before uploading natively.
+			// Validate bytes and dimensions before uploading natively, including
+			// images beyond the former request-count ceiling.
 			mimeType, payload, err := relayImagePayload(rawURL, imageRelayMaxImageBytes>>20)
 			if err != nil {
 				return nil, err
